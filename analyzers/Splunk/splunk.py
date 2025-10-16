@@ -251,7 +251,7 @@ class Splunk(Analyzer):
             self.SplunkURLSearch(data)
         elif self.data_type == 'ip':
             self.SplunkIPSearch(data)
-        elif self.data_type in ['user-agent','uri_path','domain','fqdn','hash','file','filename','mail_subject','mail','email','registry','other']:
+        elif self.data_type in ['user-agent','uri_path','domain','fqdn','hash','file','filename','mail-subject','mail','email','registry','other']:
             self.SplunkOtherSearch(data)
         else:
             self.error('Invalid Datatype')
