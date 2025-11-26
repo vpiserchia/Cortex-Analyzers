@@ -7,6 +7,8 @@ param (
     [string] $appId,
     [parameter(mandatory=$true)]
     [string] $organization,
+    [parameter(mandatory=$true)]
+    [string] $listType,
     [string] $notes="",
     [parameter(mandatory=$true)]
     [int] $expirationLength,
@@ -27,7 +29,7 @@ $allResults = @()
 ForEach ($entry in $entries) {
     if ($expirationLength -le 0) {
         # No expiration
-        $result = New-TenantAllowBlockListItems -ListType Sender -Block -Notes $notes -Entries $entry -NoExpiration -ErrorAction Continue | ConvertTo-Json
+        $result = New-TenantAllowBlockListItems -ListType $listType -Block -Notes $notes -Entries $entry -NoExpiration -ErrorAction Continue | ConvertTo-Json
         $allResults += @{
             entry = $entry;
             result = $result;
@@ -35,7 +37,7 @@ ForEach ($entry in $entries) {
         }
     } else {
         $expiry = (Get-Date).AddDays($expirationLength)
-        $result = New-TenantAllowBlockListItems -ListType Sender -Block -ExpirationDate $expiry -Notes $notes -Entries $entry -ErrorAction Continue | ConvertTo-Json
+        $result = New-TenantAllowBlockListItems -ListType $listType -Block -ExpirationDate $expiry -Notes $notes -Entries $entry -ErrorAction Continue | ConvertTo-Json
         $allResults += @{
             entry = $entry;
             result = $result;

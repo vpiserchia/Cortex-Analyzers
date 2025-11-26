@@ -69,8 +69,10 @@ class MSDefenderEndpoints(Responder):
 
             if self.observableType == "ip":
                 url = "https://api.securitycenter.windows.com/api/machines/findbyip(ip='{}',timestamp={})".format(id,time)
-            else:
+            elif self.observableType == "hostname":
                 url = "https://api.securitycenter.windows.com/api/machines?$filter=computerDnsName+eq+'{}'".format(id)
+            else:
+                self.error(f"Data type {self.observableType} not supported, accepted types are: 'ip', 'hostname'.")
 
             try:
                 response = self.msdefenderSession.get(url=url)
@@ -223,8 +225,7 @@ class MSDefenderEndpoints(Responder):
                 self.error({'message': e})
 
 
-        def pushCustomIocAlert(observable):
-            
+        def pushCustomIoc(observable, mode='Block', severity='Medium', alert=True):
             if self.observableType == 'ip':
                 indicatorType = 'IpAddress'
             elif self.observableType == 'url':
@@ -247,55 +248,18 @@ class MSDefenderEndpoints(Responder):
             body = {
                 'indicatorValue': observable,
                 'indicatorType': indicatorType,
-                'action': 'Alert',
+                'action': mode,
                 'title': "TheHive IOC: {}".format(self.caseTitle),
-                'severity': 'High',
+                'severity': severity,
                 'description': "TheHive case: {} - caseId {}".format(self.caseTitle,self.caseId),
-                'recommendedActions': 'N/A'
+                'recommendedActions': 'N/A',
+                'generateAlert': alert
             }
 
             try:
                 response = self.msdefenderSession.post(url=url, json=body)
                 if response.status_code == 200:
-                    self.report({'message': "Added IOC to Defender with Alert mode: " + self.observable })
-            except requests.exceptions.RequestException as e:
-                self.error({'message': e})
-
-        def pushCustomIocBlock(observable):
-
-            if self.observableType == 'ip':
-                indicatorType = 'IpAddress'
-            elif self.observableType == 'url':
-                indicatorType = 'Url'
-            elif self.observableType == 'domain':
-                indicatorType = 'DomainName'
-            elif self.observableType == 'hash':
-                if len(observable) == 32:
-                    indicatorType = 'FileMd5'
-                elif len(observable) == 40:
-                    indicatorType = 'FileSha1'
-                elif len(observable) == 64:
-                    indicatorType = 'FileSha256'
-                else:
-                    self.report({'message':"Observable is not a valid hash"})
-            else:
-                self.error({'message':"Observable type must be ip, url, domain or hash"})
-
-            url = 'https://api.securitycenter.windows.com/api/indicators'
-            body = {
-                'indicatorValue' : observable,
-                'indicatorType' : indicatorType,
-                'action' : 'AlertAndBlock',
-                'title' : "TheHive IOC: {}".format(self.caseTitle),
-                'severity' : 'High',
-                'description' : "TheHive case: {} - caseId {}".format(self.caseTitle,self.caseId),
-                'recommendedActions' : 'N/A'
-            }
-
-            try:
-                response = self.msdefenderSession.post(url=url, json=body)
-                if response.status_code == 200:
-                    self.report({'message': "Added IOC to Defender with Alert and Block mode: " + self.observable })
+                    self.report({'message': "Added IOC to Defender with %s mode: " % mode + self.observable })
             except requests.exceptions.RequestException as e:
                 self.error({'message': e})
 
@@ -313,9 +277,15 @@ class MSDefenderEndpoints(Responder):
         elif self.service == "startAutoInvestigation":
             startAutoInvestigation(getMachineId(self.observable))
         elif self.service == "pushIOCBlock":
-            pushCustomIocBlock(self.observable)
-        elif self.service == "pushIOCAlert":
-            pushCustomIocAlert(self.observable)
+            pushCustomIoc(self.observable, 'Block', 'Medium', False)
+        elif self.service == "pushIOCAudit":
+            pushCustomIoc(self.observable, 'Audit', 'Informational', True)
+        elif self.service == "pushIOCAllowed":
+            pushCustomIoc(self.observable, 'Allowed', 'Low', False)
+        elif self.service == "pushIOCBlockAndRemediate":
+            pushCustomIoc(self.observable, 'BlockAndRemediate', 'High', True)
+        elif self.service == "pushIOCWarn":
+            pushCustomIoc(self.observable, 'Warn', 'Medium', True)
         else:
             self.error({'message': "Unidentified service"})
 
@@ -331,7 +301,19 @@ class MSDefenderEndpoints(Responder):
             return [self.build_operation("AddTagToArtifact", tag="MsDefender:restrictedAppExec")]
         elif self.service == "unrestrictAppExecution":
             return [self.build_operation("AddTagToArtifact", tag="MsDefender:unrestrictedAppExec")]
+        elif self.service == "pushIOCBlock":
+            return [self.build_operation("AddTagToArtifact", tag="MsDefender:pushIOCBlock")]
+        elif self.service == "pushIOCAudit":
+            return [self.build_operation("AddTagToArtifact", tag="MsDefender:pushIOCAudit")]
+        elif self.service == "pushIOCAllowed":
+            return [self.build_operation("AddTagToArtifact", tag="MsDefender:pushIOCAllowed")]
+        elif self.service == "pushIOCBlockAndRemediate":
+            return [self.build_operation("AddTagToArtifact", tag="MsDefender:pushIOCBlockAndRemediate")]
+        elif self.service == "pushIOCWarn":
+            return [self.build_operation("AddTagToArtifact", tag="MsDefender:pushIOCWarn")]
+
 
 if __name__ == '__main__':
     
   MSDefenderEndpoints().run()
+

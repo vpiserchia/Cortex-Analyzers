@@ -5,7 +5,6 @@ import re
 import subprocess
 import tempfile
 from base64 import b64decode
-from pathlib import Path
 
 from cortexutils.responder import Responder
 
@@ -29,7 +28,8 @@ class MsDefenderOffice365Responder(Responder):
             'Config missing organization')
         self.block_expiration_days = self.get_param(
             'config.block_expiration_days', 0)
-        self.script_dir = os.path.join(Path(__file__).absolute(), 'scripts')
+        self.script_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'scripts')
+        print(json.dumps(self._input))
 
     def clean_output(self, stream: bytes):
         """Decode byte stream and remove ANSI color codes"""
@@ -44,8 +44,17 @@ class MsDefenderOffice365Responder(Responder):
         if not isinstance(o_data, list):
             o_data = [o_data]
 
-        if observable['dataType'] not in ['domain', 'fqdn', 'mail']:
-            self.error(f"Data type {observable['dataType']} not supported.")
+        observableType = observable['dataType']
+        if observableType == 'ip':
+            listType = 'IpAddress'
+        elif observableType == 'url':
+            listType = 'Url'
+        elif observableType in ('domain', 'fqdn', 'mail'):
+            listType = 'Sender'
+        elif observableType == 'hash':
+            listType = 'FileHash'
+        else:
+           self.error(f"Data type {observableType} not supported.")
 
         try:
             clean_cert64 = re.sub(r'\s+', '', self.certificate_base64)
@@ -56,7 +65,7 @@ class MsDefenderOffice365Responder(Responder):
         except ValueError as e:
             self.error(f"While loading the certificate data: {e}")
 
-        script_name = f'scripts/{self.service}_sender.ps1'
+        script_name = f'{self.script_dir}/{self.service}_sender.ps1'
         process_args = [
             "pwsh",
             script_name,
@@ -64,6 +73,7 @@ class MsDefenderOffice365Responder(Responder):
             self.certificate_password,
             self.app_id,
             self.organization,
+            listType,
         ]
         if self.service == 'block':
             caseId = observable['case']['caseId']
@@ -125,15 +135,17 @@ class MsDefenderOffice365Responder(Responder):
                     error_entries.append(
                         f"{item['entry']}: {item['error']}"
                     )
-            else:
+            elif item.get('result'):
                 success_dict = json.loads(item['result'])
                 if self.service == 'block':
                     result_msg = (f"{item['entry']} Expiration " +
                                   str(success_dict['ExpirationDate']))
                 else:
                     result_msg = item['entry']
+            else:
+                result_msg = (f"item['entry'] already {self.service}ed")
 
-                successful_entries.append(result_msg)
+            successful_entries.append(result_msg)
 
         if len(error_entries) > 0:
             report = {
@@ -150,5 +162,13 @@ class MsDefenderOffice365Responder(Responder):
             self.report(report)
 
 
+    def operations(self, raw):
+        self.build_operation('AddTagToCase', tag='MSDefenderO365Responder:run')
+        if self.service == "block":
+            return [self.build_operation("AddTagToArtifact", tag="MsDefenderO365:block")]
+        elif self.service == "unblock":
+            return [self.build_operation("AddTagToArtifact", tag="MsDefenderO365:unblock")]
+
 if __name__ == '__main__':
     MsDefenderOffice365Responder().run()
+

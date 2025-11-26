@@ -5,6 +5,7 @@ import requests
 import traceback
 import datetime
 from cortexutils.responder import Responder
+import json
 
 # Initialize Azure Class
 class MSEntraID(Responder):
@@ -15,6 +16,7 @@ class MSEntraID(Responder):
         self.tenant_id = self.get_param('config.tenant_id', None, 'Microsoft Entra ID Tenant ID Mising')
         self.time = ''
         self.service = self.get_param('config.service', None)
+        print(json.dumps(self._input))
 
     def authenticate(self):
         token_data = {
@@ -193,6 +195,20 @@ class MSEntraID(Responder):
         
         else:
             self.error({'message': "Unidentified service"})
+
+    def operations(self, raw):
+        self.build_operation('AddTagToCase', tag='MSEntraIDResponder:run')
+        if self.service == "disableUser":
+            return [self.build_operation("AddTagToArtifact", tag="MSEntraID:disableUser")]
+        elif self.service == "enableUser":
+            return [self.build_operation("AddTagToArtifact", tag="MSEntraID:enableUser")]
+        elif self.service == "forcePasswordReset":
+            return [self.build_operation("AddTagToArtifact", tag="MSEntraID:forcePasswordReset")]
+        elif self.service == "forcePasswordResetWithMFA":
+            return [self.build_operation("AddTagToArtifact", tag="MSEntraID:forcePasswordResetWithMFA")]
+        elif self.service == "forcePasswordResetWithMFA":
+            return [self.build_operation("AddTagToArtifact", tag="MSEntraID:forcePasswordResetWithMFA")]
+
 
 if __name__ == '__main__':
     MSEntraID().run()

@@ -12,6 +12,9 @@ import re
 GUID_RE = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-"
                     r"[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$")
 
+class NoGUIDException(Exception):
+    pass
+
 # Initialize Azure Class
 class MSEntraID(Analyzer):
     def __init__(self):
@@ -67,7 +70,7 @@ class MSEntraID(Analyzer):
 
         users = resp.json().get("value", [])
         if not users:
-            self.error(f"[GUID‑lookup] No user matches '{upn_or_mail}'")
+            raise NoGUIDException(f"[GUID‑lookup] No user matches '{upn_or_mail}'")
 
         return users[0]["id"]
 
@@ -204,6 +207,8 @@ class MSEntraID(Analyzer):
 
             self.report(new_json)
 
+        except NoGUIDException:
+            self.report({})
         except Exception as ex:
             self.error(traceback.format_exc())
 
@@ -411,6 +416,8 @@ class MSEntraID(Analyzer):
 
             self.report(user_details)
 
+        except NoGUIDException:
+            self.report({})
         except Exception as ex:
             self.error(traceback.format_exc())
 
@@ -463,23 +470,24 @@ class MSEntraID(Analyzer):
                 "directoryAudits": audit_rows
             })
 
+        except NoGUIDException:
+            self.report({})
         except Exception:
             self.error(traceback.format_exc())
-
 
     def handle_get_devices(self, headers, base_url):
         """
         Retrieves enrolled device(s) from Intune by either:
         - deviceName (hostname) if self.data_type == 'hostname', or
         - userPrincipalName (mail) if self.data_type == 'mail'.
-        
+            
         Reference: https://learn.microsoft.com/en-us/graph/api/intune-devices-manageddevice-list
         """
         try:
             # Check if the data_type is valid
             if self.data_type not in ['hostname', 'mail']:
                 self.error('Incorrect dataType. Expected "hostname" or "mail".')
-            
+                
             # Get the query value from the observable data
             query_value = self.get_data()
             if not query_value:
@@ -495,8 +503,8 @@ class MSEntraID(Analyzer):
                 safe_upn = self.user.replace("'", "''")
 
                 filter_q = (
-                    f"(userPrincipalName eq '{safe_upn}' "
-                    f"or userId eq '{self.guid}')"
+                    f"(userPrincipalName eq '{safe_upn}')"
+#                    f"or userId eq '{self.guid}')"
                 )
             else:  # hostname
                 safe_name = query_value.replace("'", "''")
@@ -521,9 +529,10 @@ class MSEntraID(Analyzer):
                 params = None
 
             devices = devices[: self.lookup_limit]
-
             self.report({"query": query_value, "devices": devices})
 
+        except NoGUIDException:
+            self.report({})
         except Exception:
             self.error(traceback.format_exc())
 
@@ -550,32 +559,59 @@ class MSEntraID(Analyzer):
         else:
             self.error({"message": "Unidentified service"})
 
+    def operations(self, raw):
+        self.build_operation('AddTagToCase', tag='MSEntraID:run')
+        if not raw:
+            return [self.build_operation("AddTagToArtifact", tag="MSEntraID:GUID:Not Found")]
+
     def summary(self, raw):
         taxonomies = []
+        if not raw:
+            taxonomies.append(self.build_taxonomy('info', 'MSEntraID', 'GUID', 'Not Found'))
+            return taxonomies
+
         if self.service == "getSignIns":
             if len(raw.get('signIns', [])) == 0:
-                taxonomies.append(self.build_taxonomy('info', 'MSEntraIDSignins', 'SignIns', 'None'))
+                taxonomies.append(self.build_taxonomy('info', 'MSEntraID', 'SignIns', 'None'))
             else:
-                taxonomies.append(self.build_taxonomy('safe', 'MSEntraIDSignins', 'Count', len(raw['signIns'])))
+                taxonomies.append(self.build_taxonomy('safe', 'MSEntraID', 'Count', len(raw['signIns'])))
 
             stats = raw.get("sum_stats", {})
             if stats.get("riskySignIns", 0) != 0:
-                taxonomies.append(self.build_taxonomy('suspicious', 'MSEntraIDSignins', 'Risky', stats["riskySignIns"]))
+                taxonomies.append(self.build_taxonomy('suspicious', 'MSEntraID', 'Risky', stats["riskySignIns"]))
             if stats.get("externalStateSignIns", 0) != 0:
-                taxonomies.append(self.build_taxonomy('suspicious', 'MSEntraIDSignins', 'OutOfState', stats["externalStateSignIns"]))
+                taxonomies.append(self.build_taxonomy('suspicious', 'MSEntraID', 'OutOfState', stats["externalStateSignIns"]))
             if stats.get("foreignSignIns", 0) != 0:
-                taxonomies.append(self.build_taxonomy('malicious', 'MSEntraIDSignins', 'ForeignSignIns', stats["foreignSignIns"]))
+                taxonomies.append(self.build_taxonomy('malicious', 'MSEntraID', 'ForeignSignIns', stats["foreignSignIns"]))
         
         elif self.service == "getUserInfo":
             if raw.get('userPrincipalName'):
-                                taxonomies.append(
-                                    self.build_taxonomy(
-                                        "info",
-                                        "MSEntraIDUserInfo",
-                                        "UPN",
-                                        raw["userPrincipalName"]
-                                    )
-                                )
+                taxonomies.append(
+                    self.build_taxonomy(
+                        "info",
+                        "MSEntraIDUserInfo",
+                        "UPN",
+                        raw["userPrincipalName"]
+                    )
+                )
+            if raw.get('userType'):
+                taxonomies.append(
+                    self.build_taxonomy(
+                        "info",
+                        "MSEntraIDInfo",
+                        "UserType",
+                        raw["userType"]
+                    )
+                )
+            if raw.get("accountEnabled") is not None:
+                taxonomies.append(
+                    self.build_taxonomy(
+                        raw["accountEnabled"] and "safe" or "suspicious",
+                        "MSEntraIDInfo",
+                        "AccountEnabled",
+                        raw["accountEnabled"]
+                    )
+                )
         elif self.service == "getDirectoryAuditLogs":
             # Get the count of directory audit logs
             count = len(raw.get("directoryAudits", []))
@@ -624,3 +660,4 @@ class MSEntraID(Analyzer):
 
 if __name__ == '__main__':
     MSEntraID().run()
+
