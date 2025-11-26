@@ -29,7 +29,6 @@ class MsDefenderOffice365Responder(Responder):
         self.block_expiration_days = self.get_param(
             'config.block_expiration_days', 0)
         self.script_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'scripts')
-        print(json.dumps(self._input))
 
     def clean_output(self, stream: bytes):
         """Decode byte stream and remove ANSI color codes"""
@@ -52,6 +51,15 @@ class MsDefenderOffice365Responder(Responder):
         elif observableType in ('domain', 'fqdn', 'mail'):
             listType = 'Sender'
         elif observableType == 'hash':
+            o_data_fix = []
+            for o in o_data:
+                if not len(o) == 64:
+                    self.report({'message':"Observable is not a valid hash: %s, skipping" % o })
+                else:
+                    o_data_fix.append(o)
+            if len(o_data_fix) == 0:
+                self.error({'message':"Observable is not a valid hash"})
+            o_data = o_data_fix.copy()
             listType = 'FileHash'
         else:
            self.error(f"Data type {observableType} not supported.")
@@ -124,6 +132,7 @@ class MsDefenderOffice365Responder(Responder):
         successful_entries = []
         error_entries = []
         for item in scriptResultDict:
+            result_msg = ""
             if item.get('error') is not None:
                 # Don't treat it as an error if the entry we're trying to
                 # unblock already exists
@@ -142,10 +151,18 @@ class MsDefenderOffice365Responder(Responder):
                                   str(success_dict['ExpirationDate']))
                 else:
                     result_msg = item['entry']
-            else:
-                result_msg = (f"item['entry'] already {self.service}ed")
+            elif item.get('stderr'):
+                if 'Entry not found' in item['stderr']:
+                    successful_entries.append(
+                        f"{item['entry']}: Entry not found."
+                    )
+                else:
+                    error_entries.append(
+                        f"{item['entry']}: {item['stderr']}"
+                    )
 
-            successful_entries.append(result_msg)
+            if result_msg:
+                successful_entries.append(result_msg)
 
         if len(error_entries) > 0:
             report = {
@@ -171,4 +188,3 @@ class MsDefenderOffice365Responder(Responder):
 
 if __name__ == '__main__':
     MsDefenderOffice365Responder().run()
-
