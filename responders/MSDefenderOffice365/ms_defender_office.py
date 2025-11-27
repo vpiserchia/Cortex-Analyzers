@@ -5,6 +5,7 @@ import re
 import subprocess
 import tempfile
 from base64 import b64decode
+import ipaddress
 
 from cortexutils.responder import Responder
 
@@ -29,7 +30,6 @@ class MsDefenderOffice365Responder(Responder):
         self.block_expiration_days = self.get_param(
             'config.block_expiration_days', 0)
         self.script_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'scripts')
-        print(json.dumps(self._input))
 
     def clean_output(self, stream: bytes):
         """Decode byte stream and remove ANSI color codes"""
@@ -44,14 +44,73 @@ class MsDefenderOffice365Responder(Responder):
         if not isinstance(o_data, list):
             o_data = [o_data]
 
+        o_data_orig = o_data.copy()
+        def ipv4_to_ipv6(ip):
+            if ":" in ip:
+                return ip
+            try:
+                ip = ipaddress.IPv6Address('2002::' + str(ipaddress.IPv4Address(ip))).compressed
+            except:
+                try:
+                    if "/" in ip:
+                        ip = ipaddress.ip_network('2002::' + str(ipaddress.IPv4Network(ip, False).compressed), False)
+                    else:
+                        ip = ipaddress.ip_network('2002::' + str(ipaddress.IPv4Network(ip)).compressed, False)
+                except:
+                    raise
+            return str(ip)
+
+        def ipv6_to_ipv4(ipv6: str):
+            """
+                If addr is an IPv4-mapped IPv6 address, return the IPv4 string.
+                Otherwise return None.
+            """
+            try:
+                ipv4 = ipaddress.ip_address(ipv6)
+                # Only IPv6 objects have .ipv4_mapped; for others, return None
+                if isinstance(ipv4, ipaddress.IPv6Address) and ipv4.ipv4_mapped:
+                    return str(ipv4.ipv4_mapped)
+            except:
+                try:
+                    if "/" in ipv6:
+                        ipv4 = ipaddress.ip_network(ipv6, False)
+                        if isinstance(ipv4, ipaddress.IPv6Network) and ipv4.ipv4_mapped:
+                            return str(ipv4.ipv4_mapped)
+                except:
+                    pass
+            return str(ipv6)
+
         observableType = observable['dataType']
         if observableType == 'ip':
-            listType = 'IpAddress'
+            o_data_fix = []
+            for o in o_data:
+                try:
+                    o = ipv4_to_ipv6(o)
+                except:
+                    self.report({'message':"Observable is not a valid ip: %s, skipping" % o })
+                o_data_fix.append(o)
+            if len(o_data_fix) == 0:
+                self.error({'message':"Observable is not a valid IP nor CIDR"})
+            o_data = o_data_fix.copy()
+            listType = 'IP'
         elif observableType == 'url':
             listType = 'Url'
         elif observableType in ('domain', 'fqdn', 'mail'):
+            if self.service == 'allow':
+                self.error(f"Data type {observableType} not supported with Allow.")
             listType = 'Sender'
-        elif observableType == 'hash':
+        elif observableType in ('hash', 'sha256'):
+            if self.service == 'allow':
+                self.error(f"Data type {observableType} not supported with Allow.")
+            o_data_fix = []
+            for o in o_data:
+                if not len(o) == 64:
+                    self.report({'message':"Observable is not a valid hash: %s, skipping" % o })
+                else:
+                    o_data_fix.append(o)
+            if len(o_data_fix) == 0:
+                self.error({'message':"Observable is not a valid hash"})
+            o_data = o_data_fix.copy()
             listType = 'FileHash'
         else:
            self.error(f"Data type {observableType} not supported.")
@@ -75,9 +134,9 @@ class MsDefenderOffice365Responder(Responder):
             self.organization,
             listType,
         ]
-        if self.service == 'block':
+        if self.service in ('block', 'allow'):
             caseId = observable['case']['caseId']
-            process_args.append(f"TheHive case #{caseId}")
+            process_args.append(f"TheHive case #{caseId} - {','.join(o_data_orig)}")
             process_args.append(str(self.block_expiration_days))
         process_args += o_data
 
@@ -97,6 +156,23 @@ class MsDefenderOffice365Responder(Responder):
                 "\n\nThe non-error output was the following: " +
                 self.clean_output(result.stdout)
             )
+
+        successful_entries = []
+        error_entries = []
+        if scriptErr:
+            for o in o_data:
+                if f'{o} - Duplicate value' in scriptErr:
+                    successful_entries.append(
+                        f'{o}: "Entry already {self.service}ed"'
+                    )
+                elif 'Entry not found.' in scriptErr:
+                    successful_entries.append(
+                        f'{o}: "Entry already {self.service}ed"'
+                    )
+                else:
+                    error_entries.append(
+                        f'{o}: "Invalid value or action\n{scriptErr}"'
+                    )
 
         try:
             # We should get back an array of dictionaries, one for each
@@ -121,9 +197,8 @@ class MsDefenderOffice365Responder(Responder):
             self.error(f"Error decoding JSON: {e}"
                        f"| Input: {extractedJson}")
 
-        successful_entries = []
-        error_entries = []
         for item in scriptResultDict:
+            result_msg = item
             if item.get('error') is not None:
                 # Don't treat it as an error if the entry we're trying to
                 # unblock already exists
@@ -135,18 +210,21 @@ class MsDefenderOffice365Responder(Responder):
                     error_entries.append(
                         f"{item['entry']}: {item['error']}"
                     )
+            elif item.get('stdout') and 'Invalid value to add' in item.get('stdout'):
+                error_entries.append(
+                        f"{item['entry']}: {item['stdiout']}"
+                    )
             elif item.get('result'):
                 success_dict = json.loads(item['result'])
-                if self.service == 'block':
+                if self.service in ('block', 'allow'):
                     result_msg = (f"{item['entry']} Expiration " +
                                   str(success_dict['ExpirationDate']))
                 else:
                     result_msg = item['entry']
-            else:
-                result_msg = (f"item['entry'] already {self.service}ed")
+            if result_msg:
+                successful_entries.append(result_msg)
 
-            successful_entries.append(result_msg)
-
+        # error & exit
         if len(error_entries) > 0:
             report = {
                 'message': "At least one endpoint action had an error.",
@@ -154,13 +232,18 @@ class MsDefenderOffice365Responder(Responder):
                 'successful_entries': successful_entries,
             }
             self.error(json.dumps(report))
+
+        # report
+        if len(successful_entries) == 0:
+            report = {
+                'message': "No change to entries",
+            }
         else:
             report = {
                 'message': "All endpoint actions completed with no error",
                 'entries': successful_entries,
             }
-            self.report(report)
-
+        self.report(report)
 
     def operations(self, raw):
         self.build_operation('AddTagToCase', tag='MSDefenderO365Responder:run')
@@ -168,7 +251,24 @@ class MsDefenderOffice365Responder(Responder):
             return [self.build_operation("AddTagToArtifact", tag="MsDefenderO365:block")]
         elif self.service == "unblock":
             return [self.build_operation("AddTagToArtifact", tag="MsDefenderO365:unblock")]
+        elif self.service == "allow":
+            return [self.build_operation("AddTagToArtifact", tag="MsDefenderO365:allow")]
+        elif self.service == "disallow":
+            return [self.build_operation("AddTagToArtifact", tag="MsDefenderO365:disallow")]
+
+    def summary(self, raw):
+        taxonomies = []
+        namespace = "MsDefenderO365"
+        predicate = "TenantAllowBlockList"
+
+        value = f"{self.service}"
+        if self.service == "block":
+            level = "suspicious"
+        else:
+            level = "safe"
+
+        taxonomies.append({"level": level, "namespace": namespace, "predicate": predicate, "value": value})
+        return {"taxonomies": taxonomies}
 
 if __name__ == '__main__':
     MsDefenderOffice365Responder().run()
-
