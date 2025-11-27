@@ -10,6 +10,45 @@ import ipaddress
 from cortexutils.responder import Responder
 
 
+def ipv4_to_ipv6(ipv4):
+    """
+        Return the IPv6 mapped address of ipv4
+    """
+    if ipv4 and ":" in ipv4:
+        return ipv4
+    if "/" in ipv4:
+        ipv4_net = ipaddress.IPv4Network(ipv4, strict=False)
+        ipv4_int = int(ipv4_net.network_address)
+        ipv6_int = (0x00000000000000000000FFFF << 32) | ipv4_int  # ::ffff:0:0 + IPv4
+        ipv6_prefixlen = 96 + ipv4_net.prefixlen  # mapped IPv6 prefix
+        return str(ipaddress.IPv6Network((ipv6_int, ipv6_prefixlen), strict=False))
+    else:
+        return ipaddress.IPv4Address(ipv4).ipv6_mapped.compressed
+
+def ipv6_to_ipv4(ipv6: str):
+    """
+        If ipv6 is an IPv4-mapped IPv6 address, return the IPv4 string.
+        Otherwise return the IPv6 address.
+    """
+    if "." in ipv6:
+        return ipv6
+    try:
+        ipv4 = ipaddress.ip_address(ipv6)
+        # Only IPv6 objects have .ipv4_mapped; for others, return None
+        if isinstance(ipv4, ipaddress.IPv6Address) and ipv4.ipv4_mapped:
+            return str(ipv4.ipv4_mapped)
+    except:
+        try:
+            if "/" in ipv6:
+                ipv6_net = ipaddress.ip_network(ipv6, False)
+                ipv4_prefixlen = ipv6_net.prefixlen  - 96 # mapped IPv4 prefix
+                ipv6 = ipv6_net.network_address.ipv4_mapped.compressed
+                return f'{ipv6}/{ipv4_prefixlen}'
+        except:
+            pass
+    return str(ipv6)
+
+
 class MsDefenderOffice365Responder(Responder):
     def __init__(self):
         Responder.__init__(self)
@@ -45,41 +84,6 @@ class MsDefenderOffice365Responder(Responder):
             o_data = [o_data]
 
         o_data_orig = o_data.copy()
-        def ipv4_to_ipv6(ip):
-            if ":" in ip:
-                return ip
-            try:
-                ip = ipaddress.IPv6Address('2002::' + str(ipaddress.IPv4Address(ip))).compressed
-            except:
-                try:
-                    if "/" in ip:
-                        ip = ipaddress.ip_network('2002::' + str(ipaddress.IPv4Network(ip, False).compressed), False)
-                    else:
-                        ip = ipaddress.ip_network('2002::' + str(ipaddress.IPv4Network(ip)).compressed, False)
-                except:
-                    raise
-            return str(ip)
-
-        def ipv6_to_ipv4(ipv6: str):
-            """
-                If addr is an IPv4-mapped IPv6 address, return the IPv4 string.
-                Otherwise return None.
-            """
-            try:
-                ipv4 = ipaddress.ip_address(ipv6)
-                # Only IPv6 objects have .ipv4_mapped; for others, return None
-                if isinstance(ipv4, ipaddress.IPv6Address) and ipv4.ipv4_mapped:
-                    return str(ipv4.ipv4_mapped)
-            except:
-                try:
-                    if "/" in ipv6:
-                        ipv4 = ipaddress.ip_network(ipv6, False)
-                        if isinstance(ipv4, ipaddress.IPv6Network) and ipv4.ipv4_mapped:
-                            return str(ipv4.ipv4_mapped)
-                except:
-                    pass
-            return str(ipv6)
-
         observableType = observable['dataType']
         if observableType == 'ip':
             o_data_fix = []
