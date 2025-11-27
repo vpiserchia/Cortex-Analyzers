@@ -9,6 +9,15 @@ import ipaddress
 
 from cortexutils.responder import Responder
 
+try:
+    from ipaddress import ipv6_mapped as ipv6_mapped
+except ImportError:
+    def ipv6_mapped(self):
+        """Return the IPv4-mapped IPv6 address.
+        Returns:
+            The IPv4-mapped IPv6 address per RFC 4291.
+        """
+        return ipaddress.IPv6Address(f'::ffff:{self}')
 
 def ipv4_to_ipv6(ipv4):
     """
@@ -23,7 +32,7 @@ def ipv4_to_ipv6(ipv4):
         ipv6_prefixlen = 96 + ipv4_net.prefixlen  # mapped IPv6 prefix
         return str(ipaddress.IPv6Network((ipv6_int, ipv6_prefixlen), strict=False))
     else:
-        return ipaddress.IPv4Address(ipv4).ipv6_mapped.compressed
+        return ipv6_mapped(ipaddress.IPv4Address(ipv4)).compressed
 
 def ipv6_to_ipv4(ipv6: str):
     """
