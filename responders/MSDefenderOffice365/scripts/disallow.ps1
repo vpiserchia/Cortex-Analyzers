@@ -20,6 +20,7 @@ $connectSplat = @{
     Organization = $organization
 }
 
+Import-Module ExchangeOnlineManagement -ErrorAction SilentlyContinue -WarningAction SilentlyContinue | Out-Null
 Connect-ExchangeOnline @connectSplat
 
 $allResults = @()
