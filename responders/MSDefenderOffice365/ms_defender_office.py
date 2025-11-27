@@ -10,6 +10,9 @@ import ipaddress
 from cortexutils.responder import Responder
 
 try:
+    """
+    python v3.13
+    """
     from ipaddress import ipv6_mapped as ipv6_mapped
 except ImportError:
     def ipv6_mapped(self):
@@ -19,20 +22,22 @@ except ImportError:
         """
         return ipaddress.IPv6Address(f'::ffff:{self}')
 
+
 def ipv4_to_ipv6(ipv4):
     """
         Return the IPv6 mapped address of ipv4
     """
-    if ipv4 and ":" in ipv4:
+    if ipv4 and ":" in ipv4: 
         return ipv4
     if "/" in ipv4:
-        ipv4_net = ipaddress.IPv4Network(ipv4, strict=False)
+        ipv4_net = ipaddress.IPv4Network(ipv4, strict=False) 
         ipv4_int = int(ipv4_net.network_address)
         ipv6_int = (0x00000000000000000000FFFF << 32) | ipv4_int  # ::ffff:0:0 + IPv4
         ipv6_prefixlen = 96 + ipv4_net.prefixlen  # mapped IPv6 prefix
         return str(ipaddress.IPv6Network((ipv6_int, ipv6_prefixlen), strict=False))
     else:
         return ipv6_mapped(ipaddress.IPv4Address(ipv4)).compressed
+
 
 def ipv6_to_ipv4(ipv6: str):
     """

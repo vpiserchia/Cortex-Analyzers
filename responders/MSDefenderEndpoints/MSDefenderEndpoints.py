@@ -5,6 +5,36 @@ import urllib
 import urllib.error
 import json
 import datetime
+import ipaddress
+
+try:
+    """
+    python v3.13
+    """
+    from ipaddress import ipv6_mapped as ipv6_mapped
+except ImportError:
+    def ipv6_mapped(self):
+        """Return the IPv4-mapped IPv6 address.
+        Returns:
+            The IPv4-mapped IPv6 address per RFC 4291.
+        """
+        return ipaddress.IPv6Address(f'::ffff:{self}')
+
+def ipv4_to_ipv6(ipv4):
+    """
+        Return the IPv6 mapped address of ipv4
+    """
+    if ipv4 and ":" in ipv4:
+        return ipv4
+    if "/" in ipv4:
+        ipv4_net = ipaddress.IPv4Network(ipv4, strict=False)
+        ipv4_int = int(ipv4_net.network_address)
+        ipv6_int = (0x00000000000000000000FFFF << 32) | ipv4_int  # ::ffff:0:0 + IPv4
+        ipv6_prefixlen = 96 + ipv4_net.prefixlen  # mapped IPv6 prefix
+        return str(ipaddress.IPv6Network((ipv6_int, ipv6_prefixlen), strict=False))
+    else:
+        return ipv6_mapped(ipaddress.IPv4Address(ipv4)).compressed
+
 
 class MSDefenderEndpoints(Responder):
     def __init__(self):
@@ -224,14 +254,37 @@ class MSDefenderEndpoints(Responder):
             except requests.exceptions.RequestException as e:
                 self.error({'message': e})
 
+        def deleteCustomIoc(observable):
+            url = 'https://api.securitycenter.windows.com/api/indicators'
+            try:
+                response = self.msdefenderSession.delete(url=f'{url}/{observable}')
+                if response.status_code == 204:
+                    self.report({'message': f"Deleted IOC from Defender: {observable}"})
+                elif response.status_code == 404:
+                    self.report({'message': f'{observable} not found'})
+                else:
+                    response.raise_for_status()
+            except requests.exceptions.HTTPError as e:
+                self.error({'message': str(e)})
+            except requests.exceptions.RequestException as e:
+                self.error({'message': str(e)})
+            except Exception as e:
+                self.error({'message': str(e)})
 
-        def pushCustomIoc(observable, mode='Block', severity='Medium', alert=True):
+        def pushCustomIoc(observable, mode='Block', severity=None, alert=True):
             if self.observableType == 'ip':
                 indicatorType = 'IpAddress'
+                observable = ipv4_to_ipv6(observable)
+                if mode == 'BlockAndRemediate':
+                    self.error({'message': f"{str.upper(self.observableType)} Indicators do not support '{mode}' mode"})
             elif self.observableType == 'url':
                 indicatorType = 'Url'
-            elif self.observableType == 'domain':
+                if mode == 'BlockAndRemediate':
+                    self.error({'message': f"{str.upper(self.observableType)} Indicators do not support '{mode}' mode"})
+            elif self.observableType in ('domain', 'fqdn'):
                 indicatorType = 'DomainName'
+                if mode == 'BlockAndRemediate':
+                    self.error({'message': f"{str.upper(self.observableType)} Indicators do not support '{mode}' mode"})
             elif self.observableType == 'hash':
                 if len(observable) == 32:
                     indicatorType = 'FileMd5'
@@ -243,26 +296,33 @@ class MSDefenderEndpoints(Responder):
                     self.report({'message':"Observable is not a valid hash"})
             else:
                 self.error({'message':"Observable type must be ip, url, domain or hash"})
-            
+
             url = 'https://api.securitycenter.windows.com/api/indicators'
             body = {
-                'indicatorValue': observable,
-                'indicatorType': indicatorType,
-                'action': mode,
-                'title': "TheHive IOC: {}".format(self.caseTitle),
-                'severity': severity,
-                'description': "TheHive case: {} - caseId {}".format(self.caseTitle,self.caseId),
-                'recommendedActions': 'N/A',
-                'generateAlert': alert
+                'IndicatorType': indicatorType,
+                'Title': "TheHive IOC: {}".format(self.caseTitle),
+                'Application': 'TheHive',
+                'Severity': severity,                
+                'RecommendedActions': 'N/A',
+                'IndicatorValue': str(observable),
+                'Description': "TheHive case: {} - caseId {}".format(self.caseTitle,self.caseId),
+                'Action': mode,
+                'GenerateAlert': alert,
             }
 
             try:
                 response = self.msdefenderSession.post(url=url, json=body)
+                response.raise_for_status()
                 if response.status_code == 200:
-                    self.report({'message': "Added IOC to Defender with %s mode: " % mode + self.observable })
+                    self.report({'message': f"Added IOC to Defender in {mode} mode: {self.observable}"})
+                else:
+                    self.error({'message': response.json()})
+            except requests.exceptions.HTTPError as e:
+                self.error({'message': str(e)})
             except requests.exceptions.RequestException as e:
-                self.error({'message': e})
-
+                self.error({'message': str(e)})
+            except Exception as e:
+                self.error({'message': str(e)})
 
         if self.service == "isolateMachine":
             isolateMachine(getMachineId(self.observable))
@@ -270,22 +330,25 @@ class MSDefenderEndpoints(Responder):
             unisolateMachine(getMachineId(self.observable))
         elif self.service == "runFullVirusScan":
             runFullVirusScan(getMachineId(self.observable))
-        elif self.service == "restrictAppExecution":
+        elif self.service == "restrictAppExecution": 
             restrictAppExecution(getMachineId(self.observable))
         elif self.service == "unrestrictAppExecution":
             unrestrictAppExecution(getMachineId(self.observable))
         elif self.service == "startAutoInvestigation":
             startAutoInvestigation(getMachineId(self.observable))
         elif self.service == "pushIOCBlock":
-            pushCustomIoc(self.observable, 'Block', 'Medium', False)
+            pushCustomIoc(self.observable, 'Block', 'Informational', False)
         elif self.service == "pushIOCAudit":
-            pushCustomIoc(self.observable, 'Audit', 'Informational', True)
+            # Audit require alert generation
+            pushCustomIoc(self.observable, 'Audit', 'Medium', True)
         elif self.service == "pushIOCAllowed":
-            pushCustomIoc(self.observable, 'Allowed', 'Low', False)
+            pushCustomIoc(self.observable, 'Allowed', 'Informational', False)
         elif self.service == "pushIOCBlockAndRemediate":
             pushCustomIoc(self.observable, 'BlockAndRemediate', 'High', True)
         elif self.service == "pushIOCWarn":
             pushCustomIoc(self.observable, 'Warn', 'Medium', True)
+        elif self.service == "pushIOCDelete":
+           deleteCustomIoc(self.observable)
         else:
             self.error({'message': "Unidentified service"})
 
@@ -311,7 +374,6 @@ class MSDefenderEndpoints(Responder):
             return [self.build_operation("AddTagToArtifact", tag="MsDefender:pushIOCBlockAndRemediate")]
         elif self.service == "pushIOCWarn":
             return [self.build_operation("AddTagToArtifact", tag="MsDefender:pushIOCWarn")]
-
 
 if __name__ == '__main__':
     
