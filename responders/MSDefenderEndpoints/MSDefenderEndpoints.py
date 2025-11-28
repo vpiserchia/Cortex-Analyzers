@@ -324,33 +324,36 @@ class MSDefenderEndpoints(Responder):
             except Exception as e:
                 self.error({'message': str(e)})
 
-        if self.service == "isolateMachine":
-            isolateMachine(getMachineId(self.observable))
-        elif self.service == "unisolateMachine":
-            unisolateMachine(getMachineId(self.observable))
-        elif self.service == "runFullVirusScan":
-            runFullVirusScan(getMachineId(self.observable))
-        elif self.service == "restrictAppExecution": 
-            restrictAppExecution(getMachineId(self.observable))
-        elif self.service == "unrestrictAppExecution":
-            unrestrictAppExecution(getMachineId(self.observable))
-        elif self.service == "startAutoInvestigation":
-            startAutoInvestigation(getMachineId(self.observable))
-        elif self.service == "pushIOCBlock":
-            pushCustomIoc(self.observable, 'Block', 'Informational', False)
-        elif self.service == "pushIOCAudit":
-            # Audit require alert generation
-            pushCustomIoc(self.observable, 'Audit', 'Medium', True)
-        elif self.service == "pushIOCAllowed":
-            pushCustomIoc(self.observable, 'Allowed', 'Informational', False)
-        elif self.service == "pushIOCBlockAndRemediate":
-            pushCustomIoc(self.observable, 'BlockAndRemediate', 'High', True)
-        elif self.service == "pushIOCWarn":
-            pushCustomIoc(self.observable, 'Warn', 'Medium', True)
-        elif self.service == "pushIOCDelete":
-           deleteCustomIoc(self.observable)
-        else:
-            self.error({'message': "Unidentified service"})
+        try:
+            if self.service == "isolateMachine":
+                isolateMachine(getMachineId(self.observable))
+            elif self.service == "unisolateMachine":
+                unisolateMachine(getMachineId(self.observable))
+            elif self.service == "runFullVirusScan":
+                runFullVirusScan(getMachineId(self.observable))
+            elif self.service == "restrictAppExecution":
+                restrictAppExecution(getMachineId(self.observable))
+            elif self.service == "unrestrictAppExecution":
+                unrestrictAppExecution(getMachineId(self.observable))
+            elif self.service == "startAutoInvestigation":
+                startAutoInvestigation(getMachineId(self.observable))
+            elif self.service == "pushIOCBlock":
+                pushCustomIoc(self.observable, 'Block', 'Informational', False)
+            elif self.service == "pushIOCAudit":
+                # Audit require alert generation
+                pushCustomIoc(self.observable, 'Audit', 'Medium', True)
+            elif self.service == "pushIOCAllowed":
+                pushCustomIoc(self.observable, 'Allowed', 'Informational', False)
+            elif self.service == "pushIOCBlockAndRemediate":
+                pushCustomIoc(self.observable, 'BlockAndRemediate', 'High', True)
+            elif self.service == "pushIOCWarn":
+                pushCustomIoc(self.observable, 'Warn', 'Medium', True)
+            elif self.service == "pushIOCDelete":
+               deleteCustomIoc(self.observable)
+            else:
+                self.error({'message': "Unidentified service"})
+        except Exception as e:
+            self.error({'message': str(e)})
 
     def operations(self, raw):
         self.build_operation('AddTagToCase', tag='MSDefenderResponder:run')
