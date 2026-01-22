@@ -6,6 +6,31 @@ import urllib.error
 import json
 import datetime
 
+# https://learn.microsoft.com/en-us/defender-endpoint/indicators-overview
+IP_HOSTNAME_ACTIONS = [
+  'isolateMachine',
+  'unisolateMachine',
+  'runFullVirusScan',
+  'restrictAppExecution',
+  'unrestrictAppExecution',
+  'startAutoInvestigation'
+]
+URL_DOMAIN_ACTIONS = [
+  'pushIOCAllowed',
+  'pushIOCAudit',
+  'pushIOCWarn',
+  'pushIOCBlock'
+]
+
+ACTIONS = {
+  'hash': URL_DOMAIN_ACTIONS + ['pushIOCBlockAndRemediate'],
+  'ip': URL_DOMAIN_ACTIONS + IP_HOSTNAME_ACTIONS,
+  'url': URL_DOMAIN_ACTIONS,
+  'domain': URL_DOMAIN_ACTIONS,
+  'fqdn': URL_DOMAIN_ACTIONS,
+  'hostname': IP_HOSTNAME_ACTIONS,
+}
+
 class MSDefenderEndpoints(Responder):
     def __init__(self):
         Responder.__init__(self)
@@ -48,11 +73,9 @@ class MSDefenderEndpoints(Responder):
         try:
             response = urllib.request.urlopen(req)
         except urllib.error.HTTPError as e:
-            #print("message: HTTP ErrorCode {}. Reason: {}".format(e.code,e.reason))
-            self.error("HTTP ErrorCode {}. Reason: {}".format(e.code,e.reason))
+            self.error({'message': "HTTP ErrorCode {}. Reason: {}".format(e.code,e.reason)})
         except urllib.error.URLError as e:
-            #print("message: URL Error: {}".format(e.reason))
-            self.error("URL Error: {}".format(e.reason))
+            self.error({'message': "URL Error: {}".format(e.reason)})
 
         jsonResponse = json.loads(response.read())
         token = jsonResponse["access_token"]
@@ -69,8 +92,10 @@ class MSDefenderEndpoints(Responder):
 
             if self.observableType == "ip":
                 url = "{}/machines/findbyip(ip='{}',timestamp={})".format(self.msdefenderApiBaseUrl, id, time)
-            else:
+            elif self.observableType == "hostname":
                 url = "{}/machines?$filter=computerDnsName+eq+'{}'".format(self.msdefenderApiBaseUrl, id)
+            else:
+                self.error({'message': f"Data type {self.observableType} not supported, accepted types are: 'ip', 'hostname'."})
 
             try:
                 response = self.msdefenderSession.get(url=url)
@@ -81,9 +106,9 @@ class MSDefenderEndpoints(Responder):
                            return jsonResponse["value"][0]["id"]
                         return jsonResponse["value"][0]["aadDeviceId"]
                     else:
-                        self.error("Can't get hostname from Microsoft API")
+                        self.error({'message': "Can't get hostname from Microsoft API"})
             except requests.exceptions.RequestException as e:
-                self.error("Error: {}".format(str(e)))
+                self.error({'message': e})
 
         def isolateMachine(machineId):
             '''
@@ -104,9 +129,9 @@ class MSDefenderEndpoints(Responder):
                 elif response.status_code == 400 and "ActiveRequestAlreadyExists" in response.content.decode("utf-8"):
                     self.report({'message': "Error isolating machine: ActiveRequestAlreadyExists"})
                 else:
-                    self.error("Can't isolate machine")
+                    self.error({'message': "Can't isolate machine"})
             except requests.exceptions.RequestException as e:
-                self.error("Error: {}".format(str(e)))
+                self.error({'message': e})
 
             self.report({'message': "Isolated machine: " + self.observable })
 
@@ -129,9 +154,9 @@ class MSDefenderEndpoints(Responder):
                 elif response.status_code == 400 and "ActiveRequestAlreadyExists" in response.content.decode("utf-8"):
                     self.report({'message': "Error full VirusScan on machine: ActiveRequestAlreadyExists"})
                 else:
-                    self.error("Error full VirusScan on machine")
+                    self.error({'message': "Error full VirusScan on machine"})
             except requests.exceptions.RequestException as e:
-                self.error("Error: {}".format(str(e)))
+                self.error({'message': e})
 
 
         def unisolateMachine(machineId):
@@ -151,9 +176,9 @@ class MSDefenderEndpoints(Responder):
                 elif response.status_code == 400 and "ActiveRequestAlreadyExists" in response.content.decode("utf-8"):
                     self.report({'message': "Error unisolating machine: ActiveRequestAlreadyExists"})
                 else:
-                    self.error("Can't unisolate machine")
+                    self.error({'message': "Can't unisolate machine"})
             except requests.exceptions.RequestException as e:
-                self.error("Error: {}".format(str(e)))
+                self.error({'message': e})
 
 
         def restrictAppExecution(machineId):
@@ -173,9 +198,9 @@ class MSDefenderEndpoints(Responder):
                 elif response.status_code == 400 and "ActiveRequestAlreadyExists" in response.content.decode("utf-8"):
                     self.report({'message': "Error restricting app execution on machine: ActiveRequestAlreadyExists"})
                 else:
-                    self.error("Can't restrict app execution")
+                    self.error({'message': "Can't restrict app execution"})
             except requests.exceptions.RequestException as e:
-                self.error("Error: {}".format(str(e)))
+                self.error({'message': e})
 
 
         def unrestrictAppExecution(machineId):
@@ -195,9 +220,9 @@ class MSDefenderEndpoints(Responder):
                 elif response.status_code == 400 and "ActiveRequestAlreadyExists" in response.content.decode("utf-8"):
                     self.report({'message': "Error removing app execution restriction on machine: ActiveRequestAlreadyExists"})
                 else:
-                    self.error("Can't unrestrict app execution")
+                    self.error({'message': "Can't unrestrict app execution"})
             except requests.exceptions.RequestException as e:
-                self.error("Error: {}".format(str(e)))
+                self.error({'message': e})
 
 
         def startAutoInvestigation(machineId):
@@ -218,18 +243,17 @@ class MSDefenderEndpoints(Responder):
                 elif response.status_code == 400 and "ActiveRequestAlreadyExists" in response.content.decode("utf-8"):
                     self.report({'message': "Error lauching auto investigation on machine: ActiveRequestAlreadyExists"})
                 else:
-                    self.error("Error auto investigation on machine")
+                    self.error({'message': "Error auto investigation on machine"})
             except requests.exceptions.RequestException as e:
-                self.error("Error: {}".format(str(e)))
+                self.error({'message': e})
 
 
-        def pushCustomIocAlert(observable):
-
+        def pushCustomIoc(observable, mode='Block', severity='Medium', alert=True):
             if self.observableType == 'ip':
                 indicatorType = 'IpAddress'
             elif self.observableType == 'url':
                 indicatorType = 'Url'
-            elif self.observableType == 'domain':
+            elif self.observableType in ('domain', 'fqdn'):
                 indicatorType = 'DomainName'
             elif self.observableType == 'hash':
                 if len(observable) == 32:
@@ -241,83 +265,69 @@ class MSDefenderEndpoints(Responder):
                 else:
                     self.report({'message':"Observable is not a valid hash"})
             else:
-                self.error("Observable type must be ip, url, domain or hash")
+                self.error({'message': "Observable type must be 'ip', 'url', 'domain', 'fqdn' or 'hash'"})
 
             url = '{}/indicators'.format(self.msdefenderApiBaseUrl)
             body = {
                 'indicatorValue': observable,
                 'indicatorType': indicatorType,
-                'action': 'Alert',
+                'action': mode,
                 'title': "TheHive IOC: {}".format(self.caseTitle),
-                'severity': 'High',
+                'severity': severity,
                 'description': "TheHive case: {} - caseId {}".format(self.caseTitle,self.caseId),
-                'recommendedActions': 'N/A'
+                'recommendedActions': 'N/A',
+                'generateAlert': alert
             }
 
             try:
                 response = self.msdefenderSession.post(url=url, json=body)
                 if response.status_code == 200:
-                    self.report({'message': "Added IOC to Defender with Alert mode: " + self.observable })
+                    self.report({'message': "Added IOC to Defender with %s mode: " % mode + self.observable })
             except requests.exceptions.RequestException as e:
-                self.error("Error: {}".format(str(e)))
+                self.error({'message': e})
 
-        def pushCustomIocBlock(observable):
 
-            if self.observableType == 'ip':
-                indicatorType = 'IpAddress'
-            elif self.observableType == 'url':
-                indicatorType = 'Url'
-            elif self.observableType == 'domain':
-                indicatorType = 'DomainName'
-            elif self.observableType == 'hash':
-                if len(observable) == 32:
-                    indicatorType = 'FileMd5'
-                elif len(observable) == 40:
-                    indicatorType = 'FileSha1'
-                elif len(observable) == 64:
-                    indicatorType = 'FileSha256'
-                else:
-                    self.report({'message':"Observable is not a valid hash"})
+        # validate the observable type and service requested upon it
+        # Note: "certificate thumbprint" is not supported by this responder
+        #       since it would require a custom observable type for it.
+        #
+        if self.observableType not in ACTIONS:
+            self.error({'message': "Observable type must be 'hostname', 'ip', 'url', 'domain', 'fqdn', 'hash'"})
+        elif self.service not in ACTIONS.get(self.observableType, []):
+            self.error(
+              {'message': f"Action '{self.service}' not supported for type '{self.observableType}'.\n"
+                          f"Valid actions are {ACTIONS[self.observableType]}" })
+
+        # run action
+        try:
+            if self.service == "isolateMachine":
+                isolateMachine(getMachineId(self.observable))
+            elif self.service == "unisolateMachine":
+                unisolateMachine(getMachineId(self.observable))
+            elif self.service == "runFullVirusScan":
+                runFullVirusScan(getMachineId(self.observable))
+            elif self.service == "restrictAppExecution":
+                restrictAppExecution(getMachineId(self.observable))
+            elif self.service == "unrestrictAppExecution":
+                unrestrictAppExecution(getMachineId(self.observable))
+            elif self.service == "startAutoInvestigation":
+                startAutoInvestigation(getMachineId(self.observable))
+            elif self.service == "pushIOCBlock":
+                pushCustomIoc(self.observable, 'Block', 'Low', False)
+            elif self.service == "pushIOCAlert":
+                pushCustomIoc(self.observable, 'Audit', 'Informational', True)
+            elif self.service == "pushIOCAudit":
+                pushCustomIoc(self.observable, 'Audit', 'Informational', True)
+            elif self.service == "pushIOCAllowed":
+                pushCustomIoc(self.observable, 'Allowed', 'Informational', False)
+            elif self.service == "pushIOCBlockAndRemediate":
+                pushCustomIoc(self.observable, 'BlockAndRemediate', 'High', True)
+            elif self.service == "pushIOCWarn":
+                pushCustomIoc(self.observable, 'Warn', 'Medium', True)
             else:
-                self.error("Observable type must be ip, url, domain or hash")
-
-            url = '{}/indicators'.format(self.msdefenderApiBaseUrl)
-            body = {
-                'indicatorValue' : observable,
-                'indicatorType' : indicatorType,
-                'action' : 'AlertAndBlock',
-                'title' : "TheHive IOC: {}".format(self.caseTitle),
-                'severity' : 'High',
-                'description' : "TheHive case: {} - caseId {}".format(self.caseTitle,self.caseId),
-                'recommendedActions' : 'N/A'
-            }
-
-            try:
-                response = self.msdefenderSession.post(url=url, json=body)
-                if response.status_code == 200:
-                    self.report({'message': "Added IOC to Defender with Alert and Block mode: " + self.observable })
-            except requests.exceptions.RequestException as e:
-                self.error("Error: {}".format(str(e)))
-
-
-        if self.service == "isolateMachine":
-            isolateMachine(getMachineId(self.observable))
-        elif self.service == "unisolateMachine":
-            unisolateMachine(getMachineId(self.observable))
-        elif self.service == "runFullVirusScan":
-            runFullVirusScan(getMachineId(self.observable))
-        elif self.service == "restrictAppExecution":
-            restrictAppExecution(getMachineId(self.observable))
-        elif self.service == "unrestrictAppExecution":
-            unrestrictAppExecution(getMachineId(self.observable))
-        elif self.service == "startAutoInvestigation":
-            startAutoInvestigation(getMachineId(self.observable))
-        elif self.service == "pushIOCBlock":
-            pushCustomIocBlock(self.observable)
-        elif self.service == "pushIOCAlert":
-            pushCustomIocAlert(self.observable)
-        else:
-            self.error("Unidentified service")
+                self.error({'message': "Unidentified service"})
+        except Exception as e:
+            self.error({'message': e})
 
     def operations(self, raw):
         self.build_operation('AddTagToCase', tag='MSDefenderResponder:run')
@@ -331,7 +341,18 @@ class MSDefenderEndpoints(Responder):
             return [self.build_operation("AddTagToArtifact", tag="MsDefender:restrictedAppExec")]
         elif self.service == "unrestrictAppExecution":
             return [self.build_operation("AddTagToArtifact", tag="MsDefender:unrestrictedAppExec")]
+        elif self.service == "pushIOCBlock":
+            return [self.build_operation("AddTagToArtifact", tag="MsDefender:pushIOCBlock")]
+        elif self.service == "pushIOCAudit":
+            return [self.build_operation("AddTagToArtifact", tag="MsDefender:pushIOCAudit")]
+        elif self.service == "pushIOCAllowed":
+            return [self.build_operation("AddTagToArtifact", tag="MsDefender:pushIOCAllowed")]
+        elif self.service == "pushIOCBlockAndRemediate":
+            return [self.build_operation("AddTagToArtifact", tag="MsDefender:pushIOCBlockAndRemediate")]
+        elif self.service == "pushIOCWarn":
+            return [self.build_operation("AddTagToArtifact", tag="MsDefender:pushIOCWarn")]
+
 
 if __name__ == '__main__':
-
   MSDefenderEndpoints().run()
+
