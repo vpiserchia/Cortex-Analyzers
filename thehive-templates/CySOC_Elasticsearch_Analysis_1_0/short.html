@@ -1,0 +1,10 @@
+<!-- Short reports receive summary as content; the long report receives full. -->
+<div style="font-size:12px;line-height:1.8;">
+  <span ng-if="!success" style="display:inline-block;border:1px solid #efc2cc;border-radius:5px;background:#fdebec;color:#a12a3a;padding:2px 8px;font-weight:650;">Elasticsearch · analyzer failed</span>
+  <span ng-if="!success" style="color:#66768b;"> Open the report for error details.</span>
+  <span ng-if="success && !content.taxonomies.length" style="color:#66768b;">Elasticsearch · summary unavailable</span>
+  <span ng-if="success" ng-repeat="taxonomy in content.taxonomies track by $index" style="display:inline-block;margin:2px 5px 2px 0;">
+    <span ng-if="taxonomy.predicate === 'Search'" style="display:inline-block;border:1px solid;border-radius:5px;padding:2px 8px;font-weight:650;" ng-style="{'color':taxonomy.value === 'complete' ? '#126344' : (taxonomy.value === 'partial' ? '#805300' : (taxonomy.value === 'failed' ? '#a12a3a' : '#52637b')), 'background-color':taxonomy.value === 'complete' ? '#e5f6ee' : (taxonomy.value === 'partial' ? '#fff4d8' : (taxonomy.value === 'failed' ? '#fdebec' : '#edf1f7')), 'border-color':taxonomy.value === 'complete' ? '#bce6d0' : (taxonomy.value === 'partial' ? '#f3d99c' : (taxonomy.value === 'failed' ? '#f3c3cc' : '#d8e0eb'))}">Search {{taxonomy.value}}</span>
+    <span ng-if="taxonomy.predicate !== 'Search'" style="display:inline-block;border:1px solid #dce4ef;border-radius:5px;background:#f2f5fa;color:#405572;padding:2px 8px;"><b>{{taxonomy.predicate === 'Hit(s)' ? 'Evidence' : taxonomy.predicate}}:</b> {{taxonomy.value}}</span>
+  </span>
+</div>

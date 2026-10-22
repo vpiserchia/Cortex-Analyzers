@@ -1,0 +1,555 @@
+{
+  "name": "Elasticsearch_Analysis",
+  "author": "Vito Piserchia <vito.piserchia@dreamlab.net>",
+  "license": "GPLv2",
+  "url": "https://github.com/DLUnderscores/Cortex-Analyzers",
+  "version": "1.0",
+  "description": "Search for IoCs in Elasticsearch.",
+  "dataTypeList": [
+    "url",
+    "domain",
+    "ip",
+    "hash",
+    "filename",
+    "fqdn",
+    "mail",
+    "mail-subject",
+    "user-agent",
+    "hostname",
+    "username"
+  ],
+  "command": "Elasticsearch_Analysis/elasticsearch_analyzer.py",
+  "baseConfig": "Elasticsearch_Analysis",
+  "configurationItems": [
+    {
+      "name": "endpoints",
+      "description": "Define the Elasticsearch endpoints",
+      "type": "string",
+      "multi": true,
+      "required": true,
+      "defaultValue": [
+        "http://127.0.0.1:9200"
+      ]
+    },
+    {
+      "name": "keys",
+      "description": "Set the Elasticsearch api keys for each endpoint. Note: Use api key or basic auth, but not both.",
+      "type": "string",
+      "multi": true,
+      "required": false
+    },
+    {
+      "name": "users",
+      "description": "Set the Elasticsearch users for each endpoint. Note: Use api key or basic auth, but not both.",
+      "type": "string",
+      "multi": true,
+      "required": false
+    },
+    {
+      "name": "passwords",
+      "description": "Set the Elasticsearch passwords for each endpoint. Note: Use api key or basic auth, but not both.",
+      "type": "string",
+      "multi": true,
+      "required": false
+    },
+    {
+      "name": "kibana",
+      "description": "Shared Kibana base URL for query, dashboard and document links, including any reverse-proxy or /s/<space> path. Leave empty to disable all Kibana links; omit app paths, query and fragment.",
+      "type": "string",
+      "multi": false,
+      "required": false,
+      "defaultValue": ""
+    },
+    {
+      "name": "dashboard",
+      "description": "Optional Kibana dashboard ID for the report query link. Leave empty to open Discover with the observable query and selected timestamp order.",
+      "type": "string",
+      "multi": false,
+      "required": false
+    },
+    {
+      "name": "index",
+      "description": "Define the Elasticsearch indices to use",
+      "type": "string",
+      "multi": true,
+      "required": true,
+      "defaultValue": [
+        "apm-*-transaction*",
+        "auditbeat-*",
+        "endgame-*",
+        "filebeat-*",
+        "packetbeat-*",
+        "winlogbeat-*",
+        "logs-*"
+      ]
+    },
+    {
+      "name": "size",
+      "description": "Define the number of hits per index to return",
+      "type": "string",
+      "multi": false,
+      "required": true,
+      "defaultValue": "10"
+    },
+    {
+      "name": "verifyssl",
+      "description": "Verify SSL certificate",
+      "type": "boolean",
+      "multi": false,
+      "required": true,
+      "defaultValue": true
+    },
+    {
+      "name": "cert_path",
+      "description": "Path to the CA on the system used to check server certificate",
+      "type": "string",
+      "multi": false,
+      "required": false
+    },
+    {
+      "name": "ip_fields",
+      "type": "string",
+      "required": false,
+      "multi": true,
+      "description": "Fields to query for IP observables.",
+      "defaultValue": [
+        "client.ip",
+        "client.nat.ip",
+        "destination.ip",
+        "destination.nat.ip",
+        "dns.resolved_ip",
+        "network.forwarded_ip",
+        "orchestrator.resource.ip",
+        "related.ip",
+        "server.ip",
+        "server.nat.ip",
+        "source.ip",
+        "source.nat.ip"
+      ]
+    },
+    {
+      "name": "domain_fields",
+      "type": "string",
+      "required": true,
+      "multi": true,
+      "description": "Fields to query for domain observables; also used for FQDN observables.",
+      "defaultValue": [
+        "client.domain",
+        "client.registered_domain",
+        "destination.domain",
+        "destination.registered_domain",
+        "server.domain",
+        "server.registered_domain",
+        "source.domain",
+        "source.registered_domain",
+        "url.domain",
+        "url.registered_domain",
+        "dns.answers.name",
+        "dns.question.name",
+        "dns.question.registered_domain"
+      ]
+    },
+    {
+      "name": "url_fields",
+      "type": "string",
+      "required": true,
+      "multi": true,
+      "description": "Fields to query for URL observables; also used for FQDN observables.",
+      "defaultValue": [
+        "url.path",
+        "url.full",
+        "url.original"
+      ]
+    },
+    {
+      "name": "hostname_fields",
+      "type": "string",
+      "required": true,
+      "multi": true,
+      "description": "Fields to query for hostname observables.",
+      "defaultValue": [
+        "host.name"
+      ]
+    },
+    {
+      "name": "email_fields",
+      "type": "string",
+      "required": true,
+      "multi": true,
+      "description": "Fields to query for mail/email-address observables.",
+      "defaultValue": [
+        "client.user.email",
+        "destination.user.email",
+        "source.user.email",
+        "user.changes.email",
+        "user.effective.email",
+        "user.email",
+        "user.target.email",
+        "process.attested_user.email",
+        "process.real_user.email",
+        "process.saved_user.email",
+        "process.user.email",
+        "server.user.email"
+      ]
+    },
+    {
+      "name": "filename_fields",
+      "type": "string",
+      "required": true,
+      "multi": true,
+      "description": "Fields to query for filename observables, together with process_args_fields.",
+      "defaultValue": [
+        "dll.pe.original_file_name",
+        "email.attachments.file.name",
+        "file.name",
+        "file.pe.original_file_name",
+        "process.name",
+        "process.parent.name",
+        "process.pe.original_file_name",
+        "process.parent.pe.original_file_name",
+        "process.session_leader.name",
+        "process.parent.session_leader.name",
+        "process.entry_leader.name",
+        "process.parent.entry_leader.name",
+        "process.group_leader.name",
+        "process.parent.group_leader.name"
+      ]
+    },
+    {
+      "name": "hash_fields",
+      "type": "string",
+      "required": true,
+      "multi": true,
+      "description": "Fields to query for hash observables.",
+      "defaultValue": [
+        "hash.cdhash",
+        "hash.imphash",
+        "hash.md5",
+        "hash.pehash",
+        "hash.sha1",
+        "hash.sha256",
+        "hash.sha384",
+        "hash.sha512",
+        "hash.ssdeep",
+        "hash.tlsh",
+        "dll.hash.cdhash",
+        "dll.hash.imphash",
+        "dll.hash.md5",
+        "dll.hash.pehash",
+        "dll.hash.sha1",
+        "dll.hash.sha256",
+        "dll.hash.sha384",
+        "dll.hash.sha512",
+        "dll.hash.ssdeep",
+        "dll.hash.tlsh",
+        "email.attachments.file.hash.cdhash",
+        "email.attachments.file.hash.imphash",
+        "email.attachments.file.hash.md5",
+        "email.attachments.file.hash.pehash",
+        "email.attachments.file.hash.sha1",
+        "email.attachments.file.hash.sha256",
+        "email.attachments.file.hash.sha384",
+        "email.attachments.file.hash.sha512",
+        "email.attachments.file.hash.ssdeep",
+        "email.attachments.file.hash.tlsh",
+        "file.hash.cdhash",
+        "file.hash.imphash",
+        "file.hash.md5",
+        "file.hash.pehash",
+        "file.hash.sha1",
+        "file.hash.sha256",
+        "file.hash.sha384",
+        "file.hash.sha512",
+        "file.hash.ssdeep",
+        "file.hash.tlsh",
+        "process.hash.cdhash",
+        "process.hash.imphash",
+        "process.hash.md5",
+        "process.hash.pehash",
+        "process.hash.sha1",
+        "process.hash.sha256",
+        "process.hash.sha384",
+        "process.hash.sha512",
+        "process.hash.ssdeep",
+        "process.hash.tlsh",
+        "process.parent.hash.cdhash",
+        "process.parent.hash.imphash",
+        "process.parent.hash.md5",
+        "process.parent.hash.pehash",
+        "process.parent.hash.sha1",
+        "process.parent.hash.sha256",
+        "process.parent.hash.sha384",
+        "process.parent.hash.sha512",
+        "process.parent.hash.ssdeep",
+        "process.parent.hash.tlsh",
+        "dll.code_signature.thumbprint_sha256",
+        "file.code_signature.thumbprint_sha256",
+        "process.code_signature.thumbprint_sha256",
+        "process.parent.code_signature.thumbprint_sha256",
+        "tls.client.hash.md5",
+        "tls.client.hash.sha1",
+        "tls.client.hash.sha256",
+        "tls.server.hash.md5",
+        "tls.server.hash.sha1",
+        "tls.server.hash.sha256",
+        "dll.pe.imphash",
+        "dll.pe.pehash",
+        "file.pe.imphash",
+        "file.pe.pehash",
+        "process.pe.imphash",
+        "process.pe.pehash",
+        "process.parent.pe.imphash",
+        "process.parent.pe.pehash",
+        "user.hash"
+      ]
+    },
+    {
+      "name": "username_fields",
+      "type": "string",
+      "required": true,
+      "multi": true,
+      "description": "Fields to query for username observables.",
+      "defaultValue": [
+        "client.user.email",
+        "client.user.id",
+        "client.user.name",
+        "destination.user.email",
+        "destination.user.id",
+        "destination.user.name",
+        "process.attested_user.email",
+        "process.attested_user.id",
+        "process.attested_user.name",
+        "process.real_user.email",
+        "process.real_user.id",
+        "process.real_user.name",
+        "process.saved_user.email",
+        "process.saved_user.id",
+        "process.saved_user.name",
+        "process.user.email",
+        "process.user.id",
+        "process.user.name",
+        "server.user.email",
+        "server.user.id",
+        "server.user.name",
+        "source.user.email",
+        "source.user.id",
+        "source.user.name",
+        "user.changes.email",
+        "user.changes.id",
+        "user.changes.name",
+        "user.effective.email",
+        "user.effective.id",
+        "user.effective.name",
+        "user.target.email",
+        "user.target.id",
+        "user.target.name",
+        "url.username",
+        "user.name",
+        "user.id",
+        "user.email"
+      ]
+    },
+    {
+      "name": "email_subject_fields",
+      "type": "string",
+      "required": true,
+      "multi": true,
+      "description": "Fields to query for mail-subject observables.",
+      "defaultValue": [
+        "email.subject"
+      ]
+    },
+    {
+      "name": "user_agent_fields",
+      "type": "string",
+      "required": true,
+      "multi": true,
+      "description": "Fields to query for user-agent observables.",
+      "defaultValue": [
+        "user_agent.name",
+        "user_agent.original"
+      ]
+    },
+    {
+      "name": "process_args_fields",
+      "type": "string",
+      "required": true,
+      "multi": true,
+      "description": "Additional process argument fields to query for filename observables.",
+      "defaultValue": [
+        "process.args"
+      ]
+    },
+    {
+      "name": "lookback_days",
+      "type": "number",
+      "required": false,
+      "multi": false,
+      "description": "Days back from job start; 0 searches all retained data.",
+      "defaultValue": 0
+    },
+    {
+      "name": "pit_threshold",
+      "type": "number",
+      "required": false,
+      "multi": false,
+      "description": "Automatic ordinary-search threshold and maximum PIT page size, from 1 to 10000. Runtime pressure can reduce page size.",
+      "defaultValue": 500
+    },
+    {
+      "name": "pit_keep_alive",
+      "type": "string",
+      "required": false,
+      "multi": false,
+      "description": "PIT retention between requests, e.g. 10m; cover processing, retry and backoff delays. Not a query timeout.",
+      "defaultValue": "60m"
+    },
+    {
+      "name": "track_total_hits",
+      "type": "string",
+      "required": false,
+      "multi": false,
+      "description": "Accurate-count threshold: integer, true for exact, false to disable.",
+      "defaultValue": "20"
+    },
+    {
+      "name": "field_retrieval",
+      "type": "string",
+      "required": false,
+      "multi": false,
+      "description": "source, fields, or docvalues; see module documentation.",
+      "defaultValue": "source"
+    },
+    {
+      "name": "include_report_fields",
+      "type": "boolean",
+      "required": false,
+      "multi": false,
+      "description": "Return existing report fields as well as query fields and timestamp.",
+      "defaultValue": true
+    },
+    {
+      "name": "return_fields",
+      "type": "string",
+      "required": false,
+      "multi": true,
+      "description": "Additional returned field names, object roots or patterns. Requested data_stream and observer fields enable the supported event tags; other fields only add report data."
+    },
+    {
+      "name": "search_concurrency",
+      "type": "number",
+      "required": false,
+      "multi": false,
+      "description": "Maximum concurrent index-pattern searches per endpoint, from 1 to 8. Runtime pressure can reduce concurrency.",
+      "defaultValue": 2
+    },
+    {
+      "name": "max_concurrent_shard_requests",
+      "type": "number",
+      "required": false,
+      "multi": false,
+      "description": "Maximum concurrent shard requests per node for each search. Runtime pressure can reduce this ceiling.",
+      "defaultValue": 3
+    },
+    {
+      "name": "sort_order",
+      "type": "string",
+      "required": false,
+      "multi": false,
+      "description": "Timestamp search order: desc retrieves newest first (default); asc retrieves oldest first. Missing timestamps are last.",
+      "defaultValue": "asc"
+    },
+    {
+      "name": "search_timeout",
+      "type": "string",
+      "required": false,
+      "multi": false,
+      "description": "Server search timeout for each page/sub-search.",
+      "defaultValue": "1800s"
+    },
+    {
+      "name": "request_timeout",
+      "type": "number",
+      "required": false,
+      "multi": false,
+      "description": "Client request timeout in seconds; must exceed search_timeout.",
+      "defaultValue": 3200
+    },
+    {
+      "name": "max_retries",
+      "type": "number",
+      "required": false,
+      "multi": false,
+      "description": "Maximum retries per HTTP request, including timeouts. 0 disables retries; 3 allows up to 4 total attempts.",
+      "defaultValue": 3
+    },
+    {
+      "name": "mark_sighted_on_hits",
+      "type": "boolean",
+      "required": false,
+      "multi": false,
+      "description": "Mark the matching observable in the originating TheHive 4 case sighted when valid hits are returned. Requires TheHive credentials and the dynamic case context in input.message; ambiguous matches are not updated.",
+      "defaultValue": false
+    },
+    {
+      "name": "thehive_url",
+      "type": "string",
+      "required": false,
+      "multi": false,
+      "description": "TheHive deployment URL for observable sighting; configuration only. Native tag operations do not use it.",
+      "defaultValue": ""
+    },
+    {
+      "name": "thehive_api_key",
+      "type": "string",
+      "required": false,
+      "multi": false,
+      "description": "TheHive API key with manageObservable permission for sighting. Native tag operations need no API key. Keep in Cortex configuration; never supply in job parameters.",
+      "defaultValue": ""
+    },
+    {
+      "name": "thehive_verifyssl",
+      "type": "boolean",
+      "required": false,
+      "multi": false,
+      "description": "Verify the TheHive server TLS certificate.",
+      "defaultValue": true
+    },
+    {
+      "name": "thehive_cert_path",
+      "type": "string",
+      "required": false,
+      "multi": false,
+      "description": "Optional CA certificate path for TheHive; otherwise use the system trust store.",
+      "defaultValue": ""
+    },
+    {
+      "name": "add_tags_to_observable",
+      "type": "boolean",
+      "required": false,
+      "multi": false,
+      "description": "Request AddTagToArtifact operations for the unique report tags. TheHive applies them to the originating observable when processing the report; no TheHive API credentials or case lookup are needed for tagging. IP classification tags can be requested without search hits.",
+      "defaultValue": true
+    },
+    {
+      "name": "data_view_id",
+      "type": "string",
+      "required": false,
+      "multi": false,
+      "description": "Kibana data-view ID used for document links. This is the saved data-view ID, not the analyzer's matched index patterns.",
+      "defaultValue": "logs-*"
+    },
+    {
+      "name": "debug",
+      "type": "boolean",
+      "required": false,
+      "multi": false,
+      "description": "Include full.debug with the submitted job configuration (credentials redacted), TheHive URL and effective organisation. False omits the debug field entirely.",
+      "defaultValue": false
+    }
+  ],
+  "registration_required": false,
+  "subscription_required": false,
+  "free_subscription": true,
+  "service_homepage": "https://www.elastic.co"
+}

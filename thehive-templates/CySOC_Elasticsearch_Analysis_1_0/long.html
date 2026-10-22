@@ -1,0 +1,339 @@
+<!-- Elasticsearch_Analysis 1.0 · long report · content is the analyzer full report. -->
+<style>
+  .esr-report { color:#203047; background:#f4f7fb; border:1px solid #dce4ef; border-radius:14px; font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; overflow:hidden; text-align:left; }
+  .esr-report *, .esr-report *:before, .esr-report *:after { box-sizing:border-box; }
+  .esr-report h2, .esr-report h3, .esr-report h4, .esr-report p { margin:0; color:inherit; }
+  .esr-report h2 { font-size:24px; font-weight:700; line-height:1.25; }
+  .esr-report h3 { font-size:17px; font-weight:700; }
+  .esr-report h4 { font-size:14px; font-weight:700; }
+  .esr-report button, .esr-report input { font:inherit; }
+  .esr-report button, .esr-report a { touch-action:manipulation; }
+  .esr-report button { cursor:pointer; }
+  .esr-report button:focus-visible, .esr-report a:focus-visible, .esr-report input:focus { outline:3px solid #60a5fa; outline-offset:3px; }
+  .esr-report button:disabled { opacity:.45; cursor:default; }
+  .esr-report code, .esr-report pre { font-family:ui-monospace,SFMono-Regular,Consolas,monospace; font-size:12px; color:#33455e; background:#f0f4f9; border:0; border-radius:6px; overflow-wrap:anywhere; word-break:break-word; }
+  .esr-report code { padding:2px 5px; white-space:normal; }
+  .esr-report pre { margin:8px 0 0; padding:12px; white-space:pre-wrap; max-height:300px; overflow:auto; line-height:1.6; }
+  .esr-report .esr-hero { background:#102238; color:#fff; padding:26px 28px 23px; border-top:4px solid #36c9c6; }
+  .esr-report .esr-topline, .esr-report .esr-between { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+  .esr-report .esr-eyebrow { text-transform:uppercase; font-size:10px; font-weight:800; letter-spacing:1.8px; color:#6de0da; margin-bottom:7px; }
+  .esr-report .esr-subtitle { color:#becde0; font-size:13px; margin-top:8px; }
+  .esr-report .esr-observable { margin-top:19px; padding-top:16px; border-top:1px solid #35465d; }
+  .esr-report .esr-observable code { display:block; padding:0; background:transparent; color:#fff; font-size:17px; margin-top:3px; }
+  .esr-report .esr-label { display:block; text-transform:uppercase; letter-spacing:.8px; font-size:10px; font-weight:750; color:#61728a; margin-bottom:4px; }
+  .esr-report .esr-hero .esr-label { color:#b9c8dc; }
+  .esr-report .esr-pill { display:inline-flex; gap:7px; align-items:center; padding:5px 10px; border:1px solid transparent; border-radius:20px; font-size:11px; font-weight:750; line-height:1.5; white-space:normal; overflow-wrap:anywhere; }
+  .esr-report .esr-pill:before { content:""; width:6px; height:6px; border-radius:50%; background:currentColor; flex-shrink:0; }
+  .esr-report .esr-good { background:#e5f6ee; color:#126344; border-color:#bce6d0; }
+  .esr-report .esr-warn { background:#fff4d8; color:#805300; border-color:#f3d99c; }
+  .esr-report .esr-bad { background:#fdebec; color:#a12a3a; border-color:#f3c3cc; }
+  .esr-report .esr-neutral { background:#edf1f7; color:#52637b; border-color:#d8e0eb; }
+  .esr-report .esr-body { padding:22px 26px 26px; }
+  .esr-report .esr-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:10px; }
+  .esr-report .esr-stat { background:#fff; border:1px solid #dce4ef; border-top:3px solid #2dadae; border-radius:9px; padding:16px; min-width:0; }
+  .esr-report .esr-stat:nth-child(2) { border-top-color:#8572d6; }
+  .esr-report .esr-stat:nth-child(3) { border-top-color:#5286cc; }
+  .esr-report .esr-stat:nth-child(4) { border-top-color:#d39b45; }
+  .esr-report .esr-stat strong { display:block; font-size:28px; letter-spacing:-.8px; line-height:1.15; margin:6px 0; color:#132c46; overflow-wrap:anywhere; }
+  .esr-report .esr-note { color:#63738a; font-size:12px; }
+  .esr-report .esr-muted { color:#63738a; }
+  .esr-report .esr-notice { padding:13px 16px; border:1px solid #d8e3f3; border-left:4px solid #4a83c8; border-radius:8px; background:#edf4fd; margin:15px 0; overflow-wrap:anywhere; }
+  .esr-report .esr-notice.esr-warning { background:#fff9eb; border-color:#eedaa9; border-left-color:#cd922e; }
+  .esr-report .esr-notice.esr-error { background:#fff1f3; border-color:#efc9d0; border-left-color:#ce5368; }
+  .esr-report .esr-notice strong { display:block; margin-bottom:3px; }
+  .esr-report .esr-chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .esr-report .esr-chip { display:inline-block; background:#edf2f8; color:#465975; border:1px solid #dce5ef; border-radius:5px; padding:3px 7px; font-size:11px; overflow-wrap:anywhere; max-width:100%; }
+  .esr-report .esr-chip-purple { color:#615099; background:#f0edfb; border-color:#ded7f5; }
+  .esr-report .esr-tags { margin-top:18px; padding:15px 16px; border:1px solid #d8e4ee; border-radius:9px; background:#fff; min-width:0; }
+  .esr-report .esr-tags h3 { margin-bottom:9px; font-size:14px; }
+  .esr-report .esr-tag { color:#126c76; background:#e8f7f6; border-color:#bfe5e2; white-space:normal; word-break:break-word; min-width:0; }
+  .esr-report .esr-tagging { margin-top:10px; padding-top:9px; border-top:1px solid #e0e8f0; overflow-wrap:anywhere; }
+  .esr-report .esr-tagging.esr-tagging-failed { color:#a12a3a; }
+  .esr-report .esr-tagging.esr-tagging-requested { color:#466a8c; }
+  .esr-report .esr-tag:nth-child(3n+2) { color:#615099; background:#f0edfb; border-color:#ded7f5; }
+  .esr-report .esr-tag:nth-child(3n) { color:#305e96; background:#edf4fd; border-color:#cadcf2; }
+  .esr-report .esr-tabs { display:flex; gap:5px; flex-wrap:wrap; border-bottom:1px solid #d8e2ed; margin:22px 0 20px; }
+  .esr-report .esr-tab { padding:10px 14px; border:0; border-bottom:3px solid transparent; background:transparent; color:#66778f; font-weight:650; }
+  .esr-report .esr-tab.esr-active { border-bottom-color:#169d9c; color:#126c76; }
+  .esr-report .esr-tab small { display:inline-block; padding:0 5px; margin-left:4px; border-radius:4px; background:#e6ecf5; font-size:11px; color:#3f5878; }
+  .esr-report .esr-coverage-tabs { margin:16px 0 13px; }
+  .esr-report .esr-coverage-tab-complete.esr-active { border-bottom-color:#23875e; color:#126344; }
+  .esr-report .esr-coverage-tab-partial.esr-active { border-bottom-color:#c98a1b; color:#805300; }
+  .esr-report .esr-coverage-tab-failed.esr-active { border-bottom-color:#ce5368; color:#a12a3a; }
+  .esr-report .esr-coverage-description { margin-bottom:14px; }
+  .esr-report .esr-sectionhead { margin-bottom:14px; }
+  .esr-report .esr-sectionhead p { margin-top:3px; }
+  .esr-report .esr-sectionhead label { max-width:100%; min-width:0; }
+  .esr-report .esr-filter { display:block; width:260px; max-width:100%; padding:9px 12px; border:1px solid #cdd9e7; border-radius:7px; background:#fff; color:#203047; }
+  .esr-report .esr-events { display:grid; gap:12px; }
+  .esr-report .esr-event { border:1px solid #dbe4ee; border-left:3px solid #5cbfc2; border-radius:9px; background:#fff; min-width:0; overflow:hidden; }
+  .esr-report .esr-event-top { padding:15px 17px 12px; }
+  .esr-report .esr-event-heading { display:flex; align-items:center; gap:8px; min-width:0; flex:1; }
+  .esr-report .esr-event-title { font-size:15px; font-weight:750; overflow-wrap:anywhere; }
+  .esr-report .esr-event-heading .esr-event-title { min-width:0; }
+  .esr-report .esr-document-link { display:inline-flex; align-items:center; justify-content:center; flex:0 0 28px; width:28px; height:28px; border-radius:5px; color:#126c76; text-decoration:none; line-height:1; }
+  .esr-report .esr-document-link:hover { background:#e8f7f6; color:#095866; text-decoration:none; }
+  .esr-report .esr-document-link .esr-external-icon { display:inline-block; font-size:16px; line-height:1; }
+  .esr-report .esr-event-time { font-size:11px; color:#65768e; }
+  .esr-report .esr-event-context { display:flex; flex-wrap:wrap; gap:8px 18px; margin:9px 0; font-size:12px; overflow-wrap:anywhere; }
+  .esr-report .esr-event-context b { color:#67788e; font-weight:500; margin-right:4px; }
+  .esr-report .esr-flow { display:flex; flex-wrap:wrap; gap:7px; align-items:center; background:#f5f8fc; border-radius:6px; padding:8px 10px; font-size:12px; margin-top:10px; }
+  .esr-report .esr-flow > span { min-width:0; overflow-wrap:anywhere; }
+  .esr-report .esr-arrow { color:#169d9c; font-weight:800; }
+  .esr-report .esr-event-url { display:block; margin-top:8px; max-height:50px; overflow:hidden; }
+  .esr-report .esr-event-footer { padding:9px 17px; border-top:1px solid #e6ecf3; display:flex; gap:8px 12px; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; }
+  .esr-report .esr-event-reference { flex:1; min-width:0; overflow-wrap:anywhere; }
+  .esr-report .esr-event-endpoint { white-space:normal; overflow-wrap:anywhere; }
+  .esr-report .esr-linkbutton { border:0; background:transparent; color:#186d88; padding:0; font-size:12px; font-weight:650; text-align:left; }
+  .esr-report .esr-details { padding:16px 17px; border-top:1px solid #e6ecf3; background:#fbfcfe; }
+  .esr-report .esr-details h4 { margin:16px 0 8px; }
+  .esr-report .esr-details h4:first-child { margin-top:0; }
+  .esr-report .esr-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+  .esr-report .esr-box { background:#fff; border:1px solid #dce4ef; border-radius:8px; padding:15px; min-width:0; overflow-wrap:anywhere; }
+  .esr-report .esr-field { min-width:0; }
+  .esr-report .esr-field pre { margin-top:4px; max-height:160px; }
+  .esr-report .esr-returned-fields { margin:8px 0 0; font-size:12px; }
+  .esr-report .esr-returned-field { display:grid; grid-template-columns:minmax(120px,.7fr) minmax(0,1.5fr); gap:6px 14px; padding:5px 0; border-bottom:1px solid #e6ecf3; }
+  .esr-report .esr-returned-field:last-child { border-bottom:0; }
+  .esr-report .esr-returned-field dt, .esr-report .esr-returned-field dd { margin:0; min-width:0; overflow-wrap:anywhere; }
+  .esr-report .esr-returned-field dt code { padding:0; background:transparent; color:#61728a; font-weight:500; }
+  .esr-report .esr-field-value { white-space:pre-wrap; overflow-wrap:anywhere; }
+  .esr-report .esr-returned-array { margin:0; padding-left:16px; }
+  .esr-report .esr-returned-array li + li { margin-top:2px; }
+  .esr-report .esr-returned-array.esr-single-value { padding:0; list-style:none; }
+  .esr-report .esr-returned-field pre { margin:0; padding:7px 9px; max-height:160px; }
+  .esr-report .esr-returned-field pre code { display:block; padding:0; border-radius:0; background:transparent; color:inherit; white-space:pre-wrap; font-size:inherit; }
+  .esr-report .esr-dl { display:grid; grid-template-columns:minmax(110px,.7fr) minmax(0,1.5fr); gap:8px 14px; margin:12px 0 0; }
+  .esr-report .esr-dl dt { font-weight:500; color:#6b7b91; }
+  .esr-report .esr-dl dd { margin:0; min-width:0; overflow-wrap:anywhere; }
+  .esr-report .esr-pager { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-top:16px; }
+  .esr-report .esr-button { display:inline-block; border:1px solid #cbd8e8; border-radius:6px; background:#fff; color:#385571; padding:7px 12px; text-decoration:none; font-size:12px; font-weight:650; }
+  .esr-report a.esr-button:hover { background:#eef5fc; color:#1a577c; text-decoration:none; }
+  .esr-report .esr-button.esr-primary { background:#126c76; border-color:#126c76; color:#fff; }
+  .esr-report a.esr-button.esr-primary:hover { background:#095866; border-color:#095866; color:#fff; }
+  .esr-report .esr-empty { text-align:center; background:#fff; border:1px dashed #cbd9e8; border-radius:9px; padding:34px 20px; }
+  .esr-report .esr-empty h3 { margin-bottom:8px; }
+  .esr-report .esr-query { margin-bottom:12px; }
+  .esr-report .esr-query h4 { font-family:ui-monospace,SFMono-Regular,Consolas,monospace; font-size:13px; overflow-wrap:anywhere; }
+  .esr-report .esr-metrics { display:flex; flex-wrap:wrap; gap:8px 20px; margin:12px 0; font-size:12px; color:#60718a; }
+  .esr-report .esr-metrics b { color:#253f5f; }
+  .esr-report .esr-decision { margin-top:12px; padding:11px 13px; background:#f0f8fa; border:1px solid #cde7eb; border-radius:7px; }
+  .esr-report .esr-decision p { margin-top:5px; font-size:12px; color:#476277; }
+  .esr-report .esr-attempt { margin-top:10px; padding:10px 12px; border-left:3px solid #b3c7dc; background:#f5f8fc; border-radius:5px; font-size:12px; }
+  .esr-report .esr-attempt p { margin-top:4px; }
+  .esr-report .esr-endpoint { margin-top:12px; padding-top:12px; border-top:1px solid #e1e8f1; }
+  .esr-report .esr-footer { margin-top:22px; border-top:1px solid #dce4ef; padding-top:12px; display:flex; flex-wrap:wrap; justify-content:space-between; gap:6px; font-size:11px; color:#73839a; }
+  @media (max-width:760px) { .esr-report .esr-stats { grid-template-columns:repeat(2,minmax(0,1fr)); } .esr-report .esr-grid { grid-template-columns:minmax(0,1fr); } .esr-report .esr-hero { padding:22px 19px; } .esr-report .esr-body { padding:18px; } }
+  @media (max-width:420px) { .esr-report .esr-stats { gap:8px; } .esr-report .esr-stat { padding:12px; } .esr-report .esr-stat strong { font-size:24px; } .esr-report .esr-body { padding:13px; } .esr-report .esr-tab { padding:9px 7px; font-size:12px; } .esr-report .esr-dl { grid-template-columns:minmax(0,1fr); gap:3px; } .esr-report .esr-dl dd { margin-bottom:8px; } .esr-report .esr-returned-field { grid-template-columns:minmax(0,1fr); gap:2px; } }
+  @media print { .esr-report .esr-tabs, .esr-report .esr-filter, .esr-report .esr-pager { display:none; } .esr-report .esr-hero { background:#e9f1f8; color:#132c46; } .esr-report .esr-hero code { color:#132c46; } .esr-report .esr-event { break-inside:avoid; } }
+</style>
+
+<div class="esr-report" ng-init="esrView={tab:'evidence',find:'',page:0,pageSize:10,coverageTab:content.search.status === 'failed' ? 'failed' : (content.search.status === 'partial' ? 'partial' : 'complete')}">
+  <header class="esr-hero">
+    <div class="esr-topline">
+      <div><div class="esr-eyebrow">Elasticsearch · investigation</div><h2>Observable search</h2></div>
+      <span class="esr-pill" ng-class="{'esr-good':success && content.search.status === 'complete','esr-warn':success && content.search.status === 'partial','esr-bad':!success || content.search.status === 'failed','esr-neutral':success && !content.search.status}">
+        Search {{success ? (content.search.status || 'unknown') : 'failed'}}
+      </span>
+    </div>
+    <p class="esr-subtitle" ng-if="success">Evidence, observed entities, and the scope behind the result.</p>
+    <p class="esr-subtitle" ng-if="!success">The analyzer could not produce a search report.</p>
+    <div class="esr-observable"><span class="esr-label">Investigated observable</span><code ng-bind="artifact.data || content.info.data || 'Not provided'"></code></div>
+  </header>
+
+  <div class="esr-body" ng-if="!success">
+    <div class="esr-notice esr-error" role="alert"><strong>Analyzer error</strong><span ng-bind="content.errorMessage || 'No error details were supplied by Cortex.'"></span></div>
+    <p class="esr-muted">Resolve the reported error and run the analyzer again. This run provides no evidence of absence.</p>
+  </div>
+
+  <div class="esr-body" ng-if="success">
+    <div class="esr-stats">
+      <div class="esr-stat"><span class="esr-label">Returned documents</span><strong ng-bind="(content.hits || []).length | number"></strong><span class="esr-note">Unique returned evidence</span></div>
+      <div class="esr-stat"><span class="esr-label">Matches across searches</span><strong><span ng-if="content.search.total_matches.value != null"><span ng-if="content.search.total_matches.relation === 'gte'">≥ </span>{{content.search.total_matches.value | number}}</span><span ng-if="content.search.total_matches.value == null" style="font-size:20px;letter-spacing:0;">Unknown</span></strong><span class="esr-note">{{content.search.total_matches.complete === true ? 'Across all requested searches' : 'Count incomplete or unavailable'}}</span></div>
+      <div class="esr-stat"><span class="esr-label">Devices observed</span><strong>{{content.search.include_report_fields === false || content.info.devicehitcount == null ? '—' : (content.info.devicehitcount | number)}}</strong><span class="esr-note">{{content.search.include_report_fields === false ? 'Context fields not requested' : 'In returned documents'}}</span></div>
+      <div class="esr-stat"><span class="esr-label">Users observed</span><strong>{{content.search.include_report_fields === false || content.info.userhitcount == null ? '—' : (content.info.userhitcount | number)}}</strong><span class="esr-note">{{content.search.include_report_fields === false ? 'Context fields not requested' : 'In returned documents'}}</span></div>
+    </div>
+    <p class="esr-note">Match counts are summed per index pattern; overlapping patterns can count a document more than once.<span ng-if="content.info.duplicate_documents_removed > 0"> {{content.info.duplicate_documents_removed | number}} duplicate returned documents removed.</span></p>
+
+    <div class="esr-notice esr-error" ng-if="content.search.status === 'failed'" role="alert"><strong>Search failed</strong><span ng-bind="content.search.reason || 'The requested searches could not be completed.'"></span><p>Returned evidence may be incomplete. Review Search coverage before drawing conclusions.</p></div>
+    <div class="esr-notice esr-warning" ng-if="content.search.status === 'partial'" role="alert"><strong>Search partially completed</strong><span ng-bind="content.search.reason || 'One or more searches did not complete.'"></span><p>Use the evidence below with the gaps described in Search coverage.</p></div>
+    <div class="esr-notice esr-warning" ng-if="!content.search.status"><strong>Search health unavailable</strong>The report has no execution diagnostics. Coverage and completion cannot be confirmed.</div>
+    <div class="esr-notice esr-warning" ng-if="content.search.results_truncated === true"><strong>More matches exist than were returned</strong>This report contains a limited set of documents. Review the result limit and search scope before treating the evidence as exhaustive.</div>
+    <div class="esr-notice" ng-if="content.search.status === 'complete' && content.search.results_truncated !== true && content.search.retrieval_complete !== true"><strong>Execution complete · evidence coverage unknown</strong>The search finished, but the report cannot confirm that every matching document was retrieved.</div>
+    <div class="esr-notice" ng-if="content.search.include_report_fields === false"><strong>Minimal context requested</strong>Device and user counts are omitted because standard report fields were not requested. Available query fields and extra return fields remain in each evidence card.</div>
+
+    <div class="esr-chips" style="margin-top:14px;">
+      <span class="esr-chip" ng-if="content.search.time_scope === 'rolling_days'">Last {{content.search.lookback_days}} days · UTC</span>
+      <span class="esr-chip" ng-if="content.search.time_scope === 'all_retained_data'">All retained data · no time filter</span>
+      <span class="esr-chip" ng-if="!content.search.time_scope">Time scope unknown</span>
+      <span class="esr-chip" ng-if="content.search.duration_ms != null">{{content.search.duration_ms / 1000 | number:2}} s elapsed</span>
+      <span class="esr-chip" ng-if="content.search.queries">{{content.search.queries.length}} searches</span>
+      <span class="esr-chip esr-chip-purple" ng-if="content.search.methods_used.indexOf('pit') >= 0">Point in time snapshot</span>
+      <span class="esr-chip" ng-if="content.search.retrieval_complete === true">All matching documents retrieved</span>
+    </div>
+
+    <section class="esr-tags" ng-if="content.tags.length || content.search.tagging" aria-label="Tags">
+      <h3>Tags</h3>
+      <div class="esr-chips"><span class="esr-chip esr-tag" ng-repeat="tag in content.tags track by $index" ng-bind="tag"></span></div>
+      <p class="esr-note esr-tagging" ng-if="content.search.tagging" ng-class="{'esr-tagging-failed':content.search.tagging.status === 'failed','esr-tagging-requested':content.search.tagging.status === 'requested'}"><strong class="esr-tagging-status">TheHive tags: {{content.search.tagging.enabled === false ? 'disabled' : (content.search.tagging.status === 'requested' ? 'requested' : (content.search.tagging.status === 'updated' ? 'updated' : (content.search.tagging.status === 'already_present' ? 'already present' : (content.search.tagging.status === 'failed' ? 'update failed' : (content.search.tagging.status === 'skipped' ? 'skipped' : 'status unavailable')))))}}</strong><span class="esr-tagging-count" ng-if="content.search.tagging.status === 'requested' && content.search.tagging.tags_requested"> · {{content.search.tagging.tags_requested.length | number}} requested</span><span class="esr-tagging-count" ng-if="(content.search.tagging.status === 'updated' || content.search.tagging.status === 'already_present') && content.search.tagging.tags_added"> · {{content.search.tagging.tags_added.length | number}} added</span><span class="esr-tagging-pending" ng-if="content.search.tagging.status === 'requested'"> · Application in TheHive is not yet confirmed.</span><span ng-if="content.search.tagging.reason"> · <span class="esr-tagging-reason" ng-bind="content.search.tagging.reason"></span></span></p>
+    </section>
+
+    <nav class="esr-tabs" aria-label="Report sections">
+      <button type="button" class="esr-tab" ng-class="{'esr-active':esrView.tab === 'evidence'}" ng-click="esrView.tab='evidence'" ng-attr-aria-pressed="{{esrView.tab === 'evidence'}}">Evidence <small>{{(content.hits || []).length | number}}</small></button>
+      <button type="button" class="esr-tab" ng-class="{'esr-active':esrView.tab === 'coverage'}" ng-click="esrView.tab='coverage'" ng-attr-aria-pressed="{{esrView.tab === 'coverage'}}">Search coverage</button>
+      <button type="button" class="esr-tab" ng-class="{'esr-active':esrView.tab === 'settings'}" ng-click="esrView.tab='settings'" ng-attr-aria-pressed="{{esrView.tab === 'settings'}}">Query &amp; settings</button>
+    </nav>
+
+    <section ng-show="esrView.tab === 'evidence'" aria-label="Returned evidence">
+      <div class="esr-between esr-sectionhead">
+        <div><h3>Returned evidence</h3><p class="esr-note">Open a document for its context, returned fields, and reference.</p></div>
+        <label ng-if="content.hits.length"><span class="esr-label">Filter returned evidence</span><input class="esr-filter" type="search" placeholder="Host, user, IP, process…" ng-model="esrView.find" ng-change="esrView.page=0" aria-label="Filter returned evidence"></label>
+      </div>
+      <div class="esr-empty" ng-if="!content.hits.length">
+        <h3>{{content.search.status === 'complete' && content.search.retrieval_complete === true ? 'No matching documents found' : 'No evidence returned'}}</h3>
+        <p class="esr-muted" ng-if="content.search.status === 'complete' && content.search.retrieval_complete === true">No matching documents were found within this search scope.</p>
+        <p class="esr-muted" ng-if="content.search.status !== 'complete' || content.search.retrieval_complete !== true">Search coverage is incomplete or unconfirmed. Review the search diagnostics.</p>
+        <p class="esr-note" style="margin-top:9px;">This result describes the searched data; it is not a verdict on the observable.</p>
+      </div>
+      <div class="esr-empty" ng-if="content.hits.length && !(content.hits | filter:esrView.find).length"><h3>No returned documents match this filter</h3><p class="esr-muted">Change the filter to see the available evidence.</p></div>
+      <div class="esr-events">
+        <article class="esr-event" ng-repeat="hit in content.hits | filter:esrView.find | limitTo:esrView.pageSize:esrView.page*esrView.pageSize" ng-init="row={open:false,raw:false}; row.endpoint=hit.endpoint_id ? ((hit.endpoint_id.indexOf('https://') === 0 || hit.endpoint_id.indexOf('http://') === 0) ? hit.endpoint_id : ((content.search.endpoints | filter:{endpoint_id:hit.endpoint_id}:true)[0].hosts.join(', ') || 'Endpoint URL unavailable')) : 'Endpoint URL unavailable'">
+          <div class="esr-event-top">
+            <div class="esr-between"><div class="esr-event-heading"><div class="esr-event-title" ng-bind="(hit.host_name.join ? hit.host_name.join(', ') : hit.host_name) || (hit.process_name.join ? hit.process_name.join(', ') : hit.process_name) || 'Matching document'"></div><a class="esr-document-link" ng-if="hit.kibana_document_url && (hit.kibana_document_url.indexOf('https://') === 0 || hit.kibana_document_url.indexOf('http://') === 0)" ng-href="{{hit.kibana_document_url}}" target="_blank" rel="noopener noreferrer" title="Open Document in Kibana" aria-label="Open Document in Kibana"><i class="fa fa-external-link esr-external-icon" aria-hidden="true"></i></a></div><time class="esr-event-time"><span ng-if="hit.timestamp">{{hit.timestamp | date:'dd MMM yyyy · HH:mm:ss':'UTC'}} UTC</span><span ng-if="!hit.timestamp" ng-bind="hit.time || 'Time unavailable'"></span></time></div>
+            <div class="esr-event-context">
+              <span ng-if="hit.user_name"><b>User</b><span ng-bind="hit.user_name.join ? hit.user_name.join(', ') : hit.user_name"></span></span>
+              <span ng-if="hit.process_name"><b>Process</b><span ng-bind="hit.process_name.join ? hit.process_name.join(', ') : hit.process_name"></span></span>
+              <span ng-if="hit.event_action"><b>Action</b><span ng-bind="hit.event_action.join ? hit.event_action.join(', ') : hit.event_action"></span></span>
+            </div>
+            <div class="esr-network-context" ng-init="row.ipObservable=(content.search.observable_type || content.info.data_type) === 'ip'; row.network={source:{ip:hit.source_ip || (row.ipObservable ? hit.fields['source.ip'] : null),nat_ip:hit.source_nat_ip || hit.fields['source.nat.ip'],port:(hit.source_port != null && hit.source_port !== '' ? hit.source_port : (row.ipObservable ? hit.fields['source.port'] : null)),nat_port:(hit.source_nat_port != null && hit.source_nat_port !== '' ? hit.source_nat_port : hit.fields['source.nat.port'])},destination:{ip:hit.destination_ip || (row.ipObservable ? hit.fields['destination.ip'] : null),nat_ip:hit.destination_nat_ip || hit.fields['destination.nat.ip'],port:(hit.destination_port != null && hit.destination_port !== '' ? hit.destination_port : (row.ipObservable ? hit.fields['destination.port'] : null)),nat_port:(hit.destination_nat_port != null && hit.destination_nat_port !== '' ? hit.destination_nat_port : hit.fields['destination.nat.port'])},client:{ip:hit.client_ip || hit.fields['client.ip'],nat_ip:hit.client_nat_ip || hit.fields['client.nat.ip'],port:(hit.client_port != null && hit.client_port !== '' ? hit.client_port : hit.fields['client.port']),nat_port:(hit.client_nat_port != null && hit.client_nat_port !== '' ? hit.client_nat_port : hit.fields['client.nat.port'])},server:{ip:hit.server_ip || hit.fields['server.ip'],nat_ip:hit.server_nat_ip || hit.fields['server.nat.ip'],port:(hit.server_port != null && hit.server_port !== '' ? hit.server_port : hit.fields['server.port']),nat_port:(hit.server_nat_port != null && hit.server_nat_port !== '' ? hit.server_nat_port : hit.fields['server.nat.port'])}}">
+              <div class="esr-flow esr-source-destination-flow" ng-if="(row.network.source.ip.join ? row.network.source.ip.join(', ') : row.network.source.ip) || (row.network.destination.ip.join ? row.network.destination.ip.join(', ') : row.network.destination.ip) || (row.ipObservable &amp;&amp; ((row.network.source.nat_ip.join ? row.network.source.nat_ip.join(', ') : row.network.source.nat_ip) || (row.network.destination.nat_ip.join ? row.network.destination.nat_ip.join(', ') : row.network.destination.nat_ip) || (row.network.source.nat_port != null &amp;&amp; row.network.source.nat_port !== '' &amp;&amp; (row.network.source.nat_port.join ? row.network.source.nat_port.join(', ') : row.network.source.nat_port) !== '') || (row.network.destination.nat_port != null &amp;&amp; row.network.destination.nat_port !== '' &amp;&amp; (row.network.destination.nat_port.join ? row.network.destination.nat_port.join(', ') : row.network.destination.nat_port) !== '')))" aria-label="Source and destination"><span class="esr-flow-endpoint"><b>Source</b> <code class="esr-source-ip" ng-bind="(row.network.source.ip.join ? row.network.source.ip.join(', ') : row.network.source.ip) || 'Not returned'"></code><span class="esr-source-port" ng-if="(row.network.source.port != null &amp;&amp; row.network.source.port !== '' &amp;&amp; (row.network.source.port.join ? row.network.source.port.join(', ') : row.network.source.port) !== '')"><span ng-if="row.ipObservable">: <code class="esr-source-port-value" ng-bind="(row.network.source.port.join ? row.network.source.port.join(', ') : row.network.source.port)"></code></span><small ng-if="!row.ipObservable"> · port {{(row.network.source.port.join ? row.network.source.port.join(', ') : row.network.source.port)}}</small></span><span class="esr-source-nat" ng-if="row.ipObservable &amp;&amp; ((row.network.source.nat_ip.join ? row.network.source.nat_ip.join(', ') : row.network.source.nat_ip) || (row.network.source.nat_port != null &amp;&amp; row.network.source.nat_port !== '' &amp;&amp; (row.network.source.nat_port.join ? row.network.source.nat_port.join(', ') : row.network.source.nat_port) !== ''))" title="source.nat.ip / source.nat.port"> (<code class="esr-source-nat-ip" ng-bind="(row.network.source.nat_ip.join ? row.network.source.nat_ip.join(', ') : row.network.source.nat_ip) || 'Not returned'"></code><span class="esr-source-nat-port" ng-if="(row.network.source.nat_port != null &amp;&amp; row.network.source.nat_port !== '' &amp;&amp; (row.network.source.nat_port.join ? row.network.source.nat_port.join(', ') : row.network.source.nat_port) !== '')">: <code class="esr-source-nat-port-value" ng-bind="(row.network.source.nat_port.join ? row.network.source.nat_port.join(', ') : row.network.source.nat_port)"></code></span>)</span></span> <span class="esr-arrow" aria-label="to">→</span> <span class="esr-flow-endpoint"><b>Destination</b> <code class="esr-destination-ip" ng-bind="(row.network.destination.ip.join ? row.network.destination.ip.join(', ') : row.network.destination.ip) || 'Not returned'"></code><span class="esr-destination-port" ng-if="(row.network.destination.port != null &amp;&amp; row.network.destination.port !== '' &amp;&amp; (row.network.destination.port.join ? row.network.destination.port.join(', ') : row.network.destination.port) !== '')"><span ng-if="row.ipObservable">: <code class="esr-destination-port-value" ng-bind="(row.network.destination.port.join ? row.network.destination.port.join(', ') : row.network.destination.port)"></code></span><small ng-if="!row.ipObservable"> · port {{(row.network.destination.port.join ? row.network.destination.port.join(', ') : row.network.destination.port)}}</small></span><span class="esr-destination-nat" ng-if="row.ipObservable &amp;&amp; ((row.network.destination.nat_ip.join ? row.network.destination.nat_ip.join(', ') : row.network.destination.nat_ip) || (row.network.destination.nat_port != null &amp;&amp; row.network.destination.nat_port !== '' &amp;&amp; (row.network.destination.nat_port.join ? row.network.destination.nat_port.join(', ') : row.network.destination.nat_port) !== ''))" title="destination.nat.ip / destination.nat.port"> (<code class="esr-destination-nat-ip" ng-bind="(row.network.destination.nat_ip.join ? row.network.destination.nat_ip.join(', ') : row.network.destination.nat_ip) || 'Not returned'"></code><span class="esr-destination-nat-port" ng-if="(row.network.destination.nat_port != null &amp;&amp; row.network.destination.nat_port !== '' &amp;&amp; (row.network.destination.nat_port.join ? row.network.destination.nat_port.join(', ') : row.network.destination.nat_port) !== '')">: <code class="esr-destination-nat-port-value" ng-bind="(row.network.destination.nat_port.join ? row.network.destination.nat_port.join(', ') : row.network.destination.nat_port)"></code></span>)</span></span></div>
+              <div class="esr-flow esr-client-server-flow" ng-if="row.ipObservable &amp;&amp; ((row.network.client.ip.join ? row.network.client.ip.join(', ') : row.network.client.ip) || (row.network.server.ip.join ? row.network.server.ip.join(', ') : row.network.server.ip) || (row.ipObservable &amp;&amp; ((row.network.client.nat_ip.join ? row.network.client.nat_ip.join(', ') : row.network.client.nat_ip) || (row.network.server.nat_ip.join ? row.network.server.nat_ip.join(', ') : row.network.server.nat_ip) || (row.network.client.nat_port != null &amp;&amp; row.network.client.nat_port !== '' &amp;&amp; (row.network.client.nat_port.join ? row.network.client.nat_port.join(', ') : row.network.client.nat_port) !== '') || (row.network.server.nat_port != null &amp;&amp; row.network.server.nat_port !== '' &amp;&amp; (row.network.server.nat_port.join ? row.network.server.nat_port.join(', ') : row.network.server.nat_port) !== ''))))" aria-label="Client and server"><span class="esr-flow-endpoint"><b>Client</b> <code class="esr-client-ip" ng-bind="(row.network.client.ip.join ? row.network.client.ip.join(', ') : row.network.client.ip) || 'Not returned'"></code><span class="esr-client-port" ng-if="(row.network.client.port != null &amp;&amp; row.network.client.port !== '' &amp;&amp; (row.network.client.port.join ? row.network.client.port.join(', ') : row.network.client.port) !== '')">: <code class="esr-client-port-value" ng-bind="(row.network.client.port.join ? row.network.client.port.join(', ') : row.network.client.port)"></code></span><span class="esr-client-nat" ng-if="row.ipObservable &amp;&amp; ((row.network.client.nat_ip.join ? row.network.client.nat_ip.join(', ') : row.network.client.nat_ip) || (row.network.client.nat_port != null &amp;&amp; row.network.client.nat_port !== '' &amp;&amp; (row.network.client.nat_port.join ? row.network.client.nat_port.join(', ') : row.network.client.nat_port) !== ''))" title="client.nat.ip / client.nat.port"> (<code class="esr-client-nat-ip" ng-bind="(row.network.client.nat_ip.join ? row.network.client.nat_ip.join(', ') : row.network.client.nat_ip) || 'Not returned'"></code><span class="esr-client-nat-port" ng-if="(row.network.client.nat_port != null &amp;&amp; row.network.client.nat_port !== '' &amp;&amp; (row.network.client.nat_port.join ? row.network.client.nat_port.join(', ') : row.network.client.nat_port) !== '')">: <code class="esr-client-nat-port-value" ng-bind="(row.network.client.nat_port.join ? row.network.client.nat_port.join(', ') : row.network.client.nat_port)"></code></span>)</span></span> <span class="esr-arrow" aria-label="to">→</span> <span class="esr-flow-endpoint"><b>Server</b> <code class="esr-server-ip" ng-bind="(row.network.server.ip.join ? row.network.server.ip.join(', ') : row.network.server.ip) || 'Not returned'"></code><span class="esr-server-port" ng-if="(row.network.server.port != null &amp;&amp; row.network.server.port !== '' &amp;&amp; (row.network.server.port.join ? row.network.server.port.join(', ') : row.network.server.port) !== '')">: <code class="esr-server-port-value" ng-bind="(row.network.server.port.join ? row.network.server.port.join(', ') : row.network.server.port)"></code></span><span class="esr-server-nat" ng-if="row.ipObservable &amp;&amp; ((row.network.server.nat_ip.join ? row.network.server.nat_ip.join(', ') : row.network.server.nat_ip) || (row.network.server.nat_port != null &amp;&amp; row.network.server.nat_port !== '' &amp;&amp; (row.network.server.nat_port.join ? row.network.server.nat_port.join(', ') : row.network.server.nat_port) !== ''))" title="server.nat.ip / server.nat.port"> (<code class="esr-server-nat-ip" ng-bind="(row.network.server.nat_ip.join ? row.network.server.nat_ip.join(', ') : row.network.server.nat_ip) || 'Not returned'"></code><span class="esr-server-nat-port" ng-if="(row.network.server.nat_port != null &amp;&amp; row.network.server.nat_port !== '' &amp;&amp; (row.network.server.nat_port.join ? row.network.server.nat_port.join(', ') : row.network.server.nat_port) !== '')">: <code class="esr-server-nat-port-value" ng-bind="(row.network.server.nat_port.join ? row.network.server.nat_port.join(', ') : row.network.server.nat_port)"></code></span>)</span></span></div>
+            </div>
+            <code class="esr-event-url" ng-if="hit.url_full || hit.dns_question_name" ng-bind="hit.url_full ? (hit.url_full.join ? hit.url_full.join(', ') : hit.url_full) : (hit.dns_question_name.join ? hit.dns_question_name.join(', ') : hit.dns_question_name)"></code>
+          </div>
+          <div class="esr-event-footer"><span class="esr-note esr-event-reference"><code class="esr-event-endpoint" ng-bind="row.endpoint"></code> · {{hit.hitindex || 'Index unknown'}}</span><button type="button" class="esr-linkbutton" ng-click="row.open=!row.open" ng-attr-aria-expanded="{{row.open}}" style="flex-shrink:0;">{{row.open ? 'Hide details −' : 'View details +'}}<span class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;"> for {{hit.hitid}}</span></button></div>
+          <div class="esr-details" ng-if="row.open">
+            <div class="esr-grid">
+              <div class="esr-field" ng-if="hit.process_parent_name || hit.process_args.length"><span class="esr-label">Process context</span><p ng-if="hit.process_parent_name">Parent: <code ng-bind="hit.process_parent_name.join ? hit.process_parent_name.join(', ') : hit.process_parent_name"></code></p><pre ng-if="hit.process_args.length" ng-bind="hit.process_args | json"></pre><p class="esr-note" ng-if="hit.process_args.length">Arguments shown as returned; token boundaries are preserved.</p></div>
+              <div class="esr-field" ng-if="hit.url_full || hit.url_domain || hit.url_path || hit.dns_question_name || hit.dns_resolvedip.length"><span class="esr-label">URL &amp; DNS context</span><p ng-if="hit.url_full"><code ng-bind="hit.url_full.join ? hit.url_full.join('\n') : hit.url_full"></code></p><p ng-if="hit.url_domain">Domain: <code ng-bind="hit.url_domain.join ? hit.url_domain.join(', ') : hit.url_domain"></code></p><p ng-if="hit.url_path">Path: <code ng-bind="hit.url_path.join ? hit.url_path.join(', ') : hit.url_path"></code></p><p ng-if="hit.dns_question_name">Question: <code ng-bind="hit.dns_question_name.join ? hit.dns_question_name.join(', ') : hit.dns_question_name"></code></p><pre ng-if="hit.dns_resolvedip.length" ng-bind="hit.dns_resolvedip | json"></pre></div>
+              <div class="esr-field" ng-if="hit.source_user_name || hit.rule_category"><span class="esr-label">Event context</span><p ng-if="hit.source_user_name">Source user: <code ng-bind="hit.source_user_name.join ? hit.source_user_name.join(', ') : hit.source_user_name"></code></p><p ng-if="hit.rule_category">Rule category: <span ng-bind="hit.rule_category.join ? hit.rule_category.join(', ') : hit.rule_category"></span></p></div>
+            </div>
+            <h4>Returned fields</h4><p class="esr-note">Query fields and extra return fields available for this document.</p>
+            <div class="esr-returned-fields-group" ng-init="returnedFields=[]">
+              <span class="esr-field-collector" hidden aria-hidden="true" ng-repeat="(fieldName, fieldValue) in hit.fields" ng-init="returnedFields.push({name:fieldName,value:fieldValue})"></span>
+              <dl class="esr-returned-fields">
+              <div class="esr-returned-field" ng-repeat="returnedField in returnedFields | orderBy:'name' track by returnedField.name" ng-init="fieldName=returnedField.name; fieldValue=returnedField.value; fieldJson=(fieldValue | json); fieldArray=fieldJson.charAt(0) === '['">
+                <dt><code ng-bind="fieldName"></code></dt>
+                <dd>
+                  <code class="esr-field-value" ng-if="!fieldArray && fieldJson.charAt(0) !== '{'" ng-bind="fieldValue === null ? 'null' : (fieldValue === '' ? '&quot;&quot;' : fieldValue)"></code>
+                  <pre ng-if="!fieldArray && fieldJson.charAt(0) === '{'"><code ng-bind="fieldJson"></code></pre>
+                  <code class="esr-field-value" ng-if="fieldArray && !fieldValue.length">[]</code>
+                  <ul class="esr-returned-array" ng-if="fieldArray && fieldValue.length" ng-class="{'esr-single-value':fieldValue.length === 1}">
+                    <li ng-repeat="value in fieldValue track by $index" ng-init="valueJson=(value | json); valueStructured=valueJson.charAt(0) === '{' || valueJson.charAt(0) === '['">
+                      <code class="esr-field-value" ng-if="!valueStructured" ng-bind="value === null ? 'null' : (value === '' ? '&quot;&quot;' : value)"></code>
+                      <pre ng-if="valueStructured"><code ng-bind="valueJson"></code></pre>
+                    </li>
+                  </ul>
+                </dd>
+              </div>
+              </dl>
+            </div>
+            <h4>Document reference</h4>
+            <dl class="esr-dl"><dt>Endpoint</dt><dd><code class="esr-reference-endpoint" ng-bind="row.endpoint"></code></dd><dt>Index</dt><dd><code ng-bind="hit.hitindex || 'Unknown'"></code></dd><dt>Document ID</dt><dd><code ng-bind="hit.hitid || 'Unknown'"></code></dd><dt>Matched patterns</dt><dd ng-bind="hit.matched_index_patterns.join(', ') || 'Not provided'"></dd><dt>Timestamp (UTC)</dt><dd ng-bind="hit.timestamp || hit.time || 'Unavailable'"></dd></dl>
+            <button type="button" class="esr-linkbutton" style="margin-top:16px;" ng-click="row.raw=!row.raw" ng-attr-aria-expanded="{{row.raw}}">{{row.raw ? 'Hide returned document JSON' : 'Show returned document JSON'}}</button><pre ng-if="row.raw" ng-bind="hit | json"></pre>
+          </div>
+        </article>
+      </div>
+      <div class="esr-pager" ng-if="(content.hits | filter:esrView.find).length">
+        <span class="esr-note">Showing {{esrView.page*esrView.pageSize+1}}–{{(esrView.page+1)*esrView.pageSize > (content.hits | filter:esrView.find).length ? (content.hits | filter:esrView.find).length : (esrView.page+1)*esrView.pageSize}} of {{(content.hits | filter:esrView.find).length | number}} returned documents</span>
+        <div><button type="button" class="esr-button" ng-click="esrView.page=esrView.page-1" ng-disabled="esrView.page === 0">Previous</button> <button type="button" class="esr-button" ng-click="esrView.page=esrView.page+1" ng-disabled="(esrView.page+1)*esrView.pageSize >= (content.hits | filter:esrView.find).length">Next</button></div>
+      </div>
+    </section>
+
+    <section ng-show="esrView.tab === 'coverage'" aria-label="Search coverage">
+      <div class="esr-sectionhead"><h3>What was searched</h3><p class="esr-note">Execution status and evidence coverage are independent. A successful search can still return a limited set.</p></div>
+      <div class="esr-notice" ng-if="content.search.reason"><strong>Overall search outcome</strong><span ng-bind="content.search.reason"></span><div class="esr-chips" style="margin-top:6px;"><code ng-repeat="reasonCode in content.search.reason_codes track by $index" ng-bind="reasonCode"></code></div></div>
+      <div class="esr-empty" ng-if="!content.search.queries.length"><h3>No per-search diagnostics available</h3><p class="esr-muted">Completion and evidence coverage cannot be verified from this report.</p></div>
+      <nav class="esr-tabs esr-coverage-tabs" aria-label="Search outcome groups" ng-if="content.search.queries.length">
+        <button type="button" class="esr-tab esr-coverage-tab-complete" aria-label="Complete searches" ng-class="{'esr-active':esrView.coverageTab === 'complete'}" ng-click="esrView.coverageTab='complete'" ng-attr-aria-pressed="{{esrView.coverageTab === 'complete'}}">Complete <small>{{(content.search.queries | filter:{status:'complete'}:true).length | number}}</small></button>
+        <button type="button" class="esr-tab esr-coverage-tab-partial" aria-label="Partial searches" ng-class="{'esr-active':esrView.coverageTab === 'partial'}" ng-click="esrView.coverageTab='partial'" ng-attr-aria-pressed="{{esrView.coverageTab === 'partial'}}">Partial <small>{{(content.search.queries | filter:{status:'partial'}:true).length | number}}</small></button>
+        <button type="button" class="esr-tab esr-coverage-tab-failed" aria-label="Failed searches" ng-class="{'esr-active':esrView.coverageTab === 'failed'}" ng-click="esrView.coverageTab='failed'" ng-attr-aria-pressed="{{esrView.coverageTab === 'failed'}}">Failure <small>{{(content.search.queries | filter:{status:'failed'}:true).length | number}}</small></button>
+      </nav>
+      <p class="esr-note esr-coverage-description" ng-if="content.search.queries.length && esrView.coverageTab === 'complete'">Completed searches, ordered by match count from highest to lowest. Unknown counts appear last. A result limit can still restrict returned evidence.</p>
+      <p class="esr-note esr-coverage-description" ng-if="content.search.queries.length && esrView.coverageTab === 'partial'">Searches that returned an incomplete response or stopped after retrieving some evidence. Review each search's errors and coverage.</p>
+      <p class="esr-note esr-coverage-description" ng-if="content.search.queries.length && esrView.coverageTab === 'failed'">Searches that failed. Any failed index search makes the overall search fail; evidence from other searches remains available.</p>
+      <div class="esr-empty esr-coverage-empty" ng-if="content.search.queries.length && !(content.search.queries | filter:{status:esrView.coverageTab}:true).length"><h3>{{esrView.coverageTab === 'complete' ? 'No complete searches' : (esrView.coverageTab === 'partial' ? 'No partial searches' : 'No failed searches')}}</h3><p class="esr-muted">Choose another search outcome to see its diagnostics.</p></div>
+      <article class="esr-box esr-query" ng-repeat="query in content.search.queries | filter:{status:esrView.coverageTab}:true | orderBy:(esrView.coverageTab === 'complete' ? ['-(observed_total.value != null ? observed_total.value : (total_matches.value != null ? total_matches.value : -1))','endpoint_id','index_pattern'] : [])" ng-init="queryView={details:false}; queryView.endpoint=query.endpoint_id ? ((query.endpoint_id.indexOf('https://') === 0 || query.endpoint_id.indexOf('http://') === 0) ? query.endpoint_id : ((content.search.endpoints | filter:{endpoint_id:query.endpoint_id}:true)[0].hosts.join(', ') || 'Endpoint URL unavailable')) : 'Endpoint URL unavailable'; queryTotal=query.observed_total.value != null ? query.observed_total : query.total_matches">
+        <div class="esr-between"><div><span class="esr-label">Elasticsearch endpoint</span><code class="esr-query-endpoint" ng-bind="queryView.endpoint"></code><h4 ng-bind="query.index_pattern || 'Index pattern unavailable'"></h4></div><span class="esr-pill" ng-class="{'esr-good':query.status === 'complete','esr-warn':query.status === 'partial','esr-bad':query.status === 'failed','esr-neutral':!query.status}">{{query.status || 'Unknown'}}</span></div>
+        <div class="esr-metrics"><span><b>{{query.returned_count == null ? 'Unknown' : (query.returned_count | number)}}</b> returned</span><span><b><span ng-if="queryTotal.value != null"><span ng-if="queryTotal.relation === 'gte' || query.status !== 'complete'">≥ </span>{{queryTotal.value | number}}</span><span ng-if="queryTotal.value == null">Unknown</span></b> matches<span ng-if="queryTotal.value != null && query.status !== 'complete'"> · incomplete count</span></span><span ng-if="query.pages_completed != null"><b>{{query.pages_completed}}</b> pages</span><span ng-if="query.es_took_ms != null"><b>{{query.es_took_ms | number}}</b> ms in Elasticsearch</span></div>
+        <div class="esr-decision" ng-if="query.method || query.decision_reason">
+          <div class="esr-between"><strong class="esr-query-method">{{query.method === 'ordinary' ? 'Ordinary search · single response' : (query.method === 'pit' ? 'PIT search · snapshot pagination' : 'Search method unavailable')}}</strong><span class="esr-chip esr-chip-purple" ng-if="content.search.search_mode === 'auto'">Selected automatically</span></div>
+          <p class="esr-decision-reason" ng-bind="query.decision_detail || query.decision_reason || 'Decision details were not recorded.'"></p>
+          <p class="esr-probe-summary" ng-if="query.probe.attempted === true">Preliminary search: <strong>{{query.probe.hits == null ? 'unknown' : (query.probe.hits | number)}} hits</strong><span ng-if="query.probe.wall_ms != null"> in {{query.probe.wall_ms | number}} ms</span><span ng-if="query.probe.complete === true"> · response complete</span><span ng-if="query.probe.complete === false"> · response incomplete</span><span ng-if="query.probe.discarded === true">. Preliminary hits and counts were discarded; displayed results come from the selected search attempt.</span><span ng-if="query.probe.discarded === false">. This response supplies the displayed results.</span></p>
+        </div>
+        <div class="esr-notice esr-warning esr-pit-restart" ng-if="query.pit.snapshot_restarted === true || query.pit.restarts > 0"><strong>Search restarted with a fresh snapshot</strong><span>The previous PIT was lost. The analyzer restarted this search from page one; earlier attempt hits and counts were discarded.</span><span ng-if="query.status === 'complete'"> The replacement search completed successfully.</span><span ng-if="query.status !== 'complete'"> The replacement search is incomplete; review its coverage and errors below.</span></div>
+        <div class="esr-chips"><span class="esr-chip" ng-if="query.retrieval_complete === true">All matches retrieved</span><span class="esr-chip" ng-if="query.results_truncated === true">Result limit · more matches exist</span><span class="esr-chip" ng-if="query.retrieval_complete !== true && query.results_truncated !== true">Coverage incomplete or unknown</span><span class="esr-chip" ng-if="query.shards.failed > 0">{{query.shards.failed}} failed shards</span></div>
+        <p ng-if="query.reason" style="margin-top:10px;" ng-bind="query.reason"></p>
+        <div class="esr-notice esr-error" ng-repeat="error in query.errors track by $index"><strong>{{error.code || 'Search error'}}<span ng-if="error.http_status"> · HTTP {{error.http_status}}</span></strong><span ng-bind="error.reason || 'No details supplied'"></span></div>
+        <div class="esr-notice esr-warning" ng-if="query.warnings.length"><strong>Search warnings</strong><div ng-repeat="warning in query.warnings track by $index"><span ng-if="warning === 'pit_cleanup_failed' || warning === 'pit_cleanup_unconfirmed'">PIT cleanup was not confirmed. The snapshot should expire after its keep-alive interval. </span><span ng-if="warning === 'missing_or_invalid_timestamp'">Some returned timestamps are unavailable or invalid. </span><code ng-bind="warning"></code></div></div>
+        <button type="button" class="esr-linkbutton" style="margin-top:12px;" ng-click="queryView.details=!queryView.details" ng-attr-aria-expanded="{{queryView.details}}">{{queryView.details ? 'Hide diagnostics −' : 'View diagnostics +'}}</button>
+        <div ng-if="queryView.details">
+          <dl class="esr-dl"><dt>Stop reason</dt><dd ng-bind="query.stop_reason || 'Not provided'"></dd><dt>Wall time</dt><dd>{{query.wall_ms == null ? 'Unknown' : (query.wall_ms | number)}}<span ng-if="query.wall_ms != null"> ms · includes search selection and recovery when needed</span></dd><dt>Shards</dt><dd ng-if="query.shards.total != null">{{query.shards.successful}} successful / {{query.shards.total}} total · {{query.shards.failed}} failed · {{query.shards.skipped || 0}} skipped</dd><dd ng-if="query.shards.total == null">Unknown</dd><dt>Field retrieval</dt><dd ng-bind="query.field_retrieval || 'Unknown'"></dd><dt>PIT</dt><dd>{{query.pit.enabled === true ? 'Enabled' : (query.pit.enabled === false ? 'Disabled' : 'Unknown')}}<span ng-if="query.pit.enabled"> · keep alive {{query.pit.keep_alive || 'unknown'}} · opened {{query.pit.opened === true ? 'yes' : (query.pit.opened === false ? 'no' : 'unknown')}} · closed {{query.pit.closed === true ? 'yes' : (query.pit.closed === false ? 'no' : 'unconfirmed')}}</span></dd><dt ng-if="query.pit.close_reason">PIT cleanup detail</dt><dd ng-if="query.pit.close_reason" ng-bind="query.pit.close_reason"></dd></dl>
+          <div class="esr-box esr-runtime" style="margin-top:12px;" ng-if="query.runtime">
+            <h4>Runtime adaptation</h4>
+            <p class="esr-note" style="margin-top:6px;">Limits shown are the controller state recorded for this search.</p>
+            <dl class="esr-dl"><dt>Effective concurrency</dt><dd>{{query.runtime.effective_limits.search_concurrency == null ? 'Unknown' : query.runtime.effective_limits.search_concurrency}}<span ng-if="query.runtime.configured_limits.search_concurrency != null"> / {{query.runtime.configured_limits.search_concurrency}} configured maximum</span></dd><dt>Shard requests per node</dt><dd>{{query.runtime.effective_limits.max_concurrent_shard_requests == null ? 'Unknown' : query.runtime.effective_limits.max_concurrent_shard_requests}}</dd><dt>Effective PIT page size</dt><dd>{{query.runtime.effective_limits.page_size == null ? 'Unknown' : (query.runtime.effective_limits.page_size | number)}}</dd><dt>Backoff waits</dt><dd>{{query.runtime.pacing.waits == null ? 'Unknown' : query.runtime.pacing.waits}}<span ng-if="query.runtime.pacing.total_wait_ms != null"> · {{query.runtime.pacing.total_wait_ms | number}} ms total</span></dd><dt ng-if="query.runtime.latency.samples > 0">Mean request latency</dt><dd ng-if="query.runtime.latency.samples > 0">{{query.runtime.latency.mean_ms | number:1}} ms · {{query.runtime.latency.samples}} samples</dd><dt>Monitoring</dt><dd class="esr-monitoring-status">{{query.runtime.monitoring.status === 'available' ? 'Cluster metrics available' : (query.runtime.monitoring.status === 'unavailable' ? 'Cluster metrics unavailable; response signals remain active' : 'Cluster metrics not sampled')}}</dd></dl>
+            <p class="esr-note" style="margin-top:8px;" ng-if="query.runtime.monitoring.status === 'unavailable'">Monitoring access is optional. The controller can still respond to search errors, timeouts, and response sizes.</p>
+            <p class="esr-note" style="margin-top:8px;" ng-if="query.runtime.adjustments.length">{{query.runtime.adjustments.length}} runtime limit adjustment{{query.runtime.adjustments.length === 1 ? '' : 's'}} recorded.</p>
+            <div class="esr-chips" style="margin-top:8px;"><span class="esr-chip" ng-repeat="signal in query.runtime.signals track by $index" ng-bind="({'observed_search_queue':'Search queue detected','observed_high_cpu':'High CPU observed','observed_high_heap':'High heap usage observed','new_search_rejections':'New search rejections','http_overload':'Server overload response','request_timeout':'Client request timeout','search_timeout':'Search timeout','large_response':'Large response payload'})[signal] || signal"></span></div>
+          </div>
+          <div class="esr-attempt-history" style="margin-top:12px;" ng-if="query.pit.attempts.length > 1"><h4>PIT attempt history</h4><p class="esr-note">Earlier attempts are diagnostic only and do not add to the displayed evidence or match count.</p><div class="esr-attempt" ng-repeat="attempt in query.pit.attempts track by $index"><strong>Attempt {{attempt.attempt || ($index + 1)}} · {{attempt.status || 'unknown'}}</strong><span ng-if="attempt.returned_count != null"> · {{attempt.returned_count | number}} documents fetched</span><span ng-if="attempt.wall_ms != null"> · {{attempt.wall_ms | number}} ms</span><p ng-repeat="error in attempt.errors track by $index"><code ng-bind="error.code || 'Search error'"></code> <span ng-bind="error.reason || 'No details supplied'"></span></p></div></div>
+          <div class="esr-chips" style="margin-top:10px;"><code ng-repeat="code in query.reason_codes track by $index" ng-bind="code"></code></div>
+          <pre ng-if="query.shards.failures.length" ng-bind="query.shards.failures | json"></pre>
+          <div ng-if="query.requested_fields.length" style="margin-top:12px;"><span class="esr-label">Requested fields</span><div class="esr-chips"><code ng-repeat="field in query.requested_fields track by $index" ng-bind="field"></code></div></div>
+        </div>
+      </article>
+      <div class="esr-box" ng-if="content.search.endpoints.length"><h4>Endpoint inventory</h4><div class="esr-endpoint" ng-repeat="endpoint in content.search.endpoints track by $index"><span class="esr-label">Elasticsearch endpoint</span><div ng-repeat="host in endpoint.hosts track by $index"><code class="esr-inventory-endpoint" ng-bind="host"></code></div><div class="esr-notice esr-warning" ng-if="endpoint.close_warning"><strong>Connection cleanup warning</strong><span ng-bind="endpoint.close_warning"></span></div></div></div>
+    </section>
+
+    <section ng-show="esrView.tab === 'settings'" aria-label="Query and settings">
+      <div class="esr-sectionhead"><h3>Query &amp; search scope</h3><p class="esr-note">Reproduce the investigation with the same query, time bounds, and retrieval settings.</p></div>
+      <div class="esr-box esr-kibana">
+        <div class="esr-between"><h4>Kibana query (KQL)</h4><a class="esr-button esr-primary esr-kibana-link" ng-if="content.search.kibana.language === 'kuery' && content.search.kibana.query && content.search.kibana.observable_type && content.search.kibana.query_fields.length && content.search.kibana.url && (content.search.kibana.url.indexOf('https://') === 0 || content.search.kibana.url.indexOf('http://') === 0)" ng-href="{{content.search.kibana.url}}" target="_blank" rel="noopener noreferrer">Open query in Kibana ↗ <span ng-if="content.search.kibana.target === 'discover'">(Discover)</span><span ng-if="content.search.kibana.target === 'dashboard'">(Dashboard)</span></a></div>
+        <!-- Only the analyzer's typed query is authoritative. Legacy info.querystring
+             may include fields from unrelated observable types; never reconstruct
+             or display it as the query executed by this version of the analyzer. -->
+        <div ng-if="content.search.kibana.language === 'kuery' && content.search.kibana.query && content.search.kibana.observable_type && content.search.kibana.query_fields.length">
+          <pre class="esr-kibana-query" ng-bind="content.search.kibana.query"></pre>
+          <p class="esr-note" style="margin-top:8px;">Generated for observable type <code ng-bind="content.search.kibana.observable_type"></code> using the analyzer-selected fields listed below.</p>
+          <div style="margin-top:8px;" ng-if="content.search.kibana.url && (content.search.kibana.url.indexOf('https://') === 0 || content.search.kibana.url.indexOf('http://') === 0)">
+            <p class="esr-note" style="margin-top:8px;" ng-if="content.search.kibana.time_window_applied === true || (content.search.kibana.time_window_applied == null && content.search.kibana_time_window_applied === true)">The Kibana link includes this run's absolute time window.</p>
+            <p class="esr-note" style="margin-top:8px;" ng-if="content.search.kibana.time_window_applied === false || (content.search.kibana.time_window_applied == null && content.search.kibana_time_window_applied !== true)">The link does not apply this run's time bounds. Check Kibana's time picker before comparing results.</p>
+            <p class="esr-note esr-discover-note" style="margin-top:8px;" ng-if="content.search.kibana.target === 'discover'">Check that the Discover data view covers the indices searched by this analyzer.</p>
+            <p class="esr-note esr-discover-sort" style="margin-top:8px;" ng-if="content.search.kibana.target === 'discover' && content.search.kibana.sort_applied === true">Discover opens with this run's timestamp sort order.</p>
+            <p class="esr-note esr-dashboard-sort" style="margin-top:8px;" ng-if="content.search.kibana.target === 'dashboard'">Dashboard panels control their own sort order. The link applies the query and available time bounds.</p>
+          </div>
+          <p class="esr-note" style="margin-top:8px;" ng-if="!content.search.kibana.url">Configure the Kibana URL to enable this link; a dashboard ID is optional. You can also copy the query into Kibana and apply the search scope below.</p>
+        </div>
+        <div class="esr-notice esr-warning" ng-if="content.search.kibana.language !== 'kuery' || !content.search.kibana.query || !content.search.kibana.observable_type || !content.search.kibana.query_fields.length">
+          <strong>Typed query unavailable</strong>
+          <span>Query text not provided with verified observable-type metadata. Re-run the updated analyzer to generate a query and Kibana link for the fields actually searched.</span>
+        </div>
+      </div>
+      <div class="esr-grid" style="margin-top:14px;">
+        <div class="esr-box"><h4>Time &amp; limits</h4><dl class="esr-dl"><dt>Search scope</dt><dd>{{content.search.time_scope === 'all_retained_data' ? 'All retained data (no time filter)' : (content.search.time_scope === 'rolling_days' ? 'Last ' + content.search.lookback_days + ' days' : 'Unknown')}}</dd><dt>From (UTC)</dt><dd ng-bind="content.search.time_window.from || (content.search.time_scope === 'all_retained_data' ? 'Unbounded' : 'Unknown')"></dd><dt>To (UTC)</dt><dd ng-bind="content.search.time_window.to || (content.search.time_scope === 'all_retained_data' ? 'Unbounded' : 'Unknown')"></dd><dt>Documents per pattern</dt><dd>{{content.search.size_per_index_pattern == null ? 'Unknown' : (content.search.size_per_index_pattern | number)}}</dd><dt>Total-hit tracking</dt><dd>{{content.search.track_total_hits === true ? 'Exact counts requested' : (content.search.track_total_hits === false ? 'Disabled' : (content.search.track_total_hits == null ? 'Unknown' : 'Threshold: ' + (content.search.track_total_hits | number)))}}</dd></dl></div>
+        <div class="esr-box"><h4>Retrieval &amp; execution</h4><dl class="esr-dl"><dt>Search order</dt><dd class="esr-sort-order">{{content.search.sort_order === 'desc' ? 'Newest first' : (content.search.sort_order === 'asc' ? 'Oldest first' : 'Unknown')}}</dd><dt>Sort field</dt><dd ng-bind="content.search.sort_field || 'Unknown'"></dd><dt>Fields mode</dt><dd><code ng-bind="content.search.field_retrieval || 'Unknown'"></code></dd><dt>Standard report fields</dt><dd>{{content.search.include_report_fields === true ? 'Included' : (content.search.include_report_fields === false ? 'Not requested' : 'Unknown')}}</dd><dt>Search mode</dt><dd class="esr-search-mode">{{content.search.search_mode === 'auto' ? 'Automatic' : (content.search.search_mode === 'ordinary' ? 'Ordinary search' : (content.search.search_mode === 'pit' ? 'PIT search' : 'Not recorded'))}}</dd><dt>Methods used</dt><dd class="esr-methods-used"><span ng-repeat="method in content.search.methods_used track by $index">{{$first ? '' : ', '}}{{method === 'ordinary' ? 'Ordinary search' : (method === 'pit' ? 'PIT search' : method)}}</span><span ng-if="!content.search.methods_used.length">Not recorded</span></dd><dt>Automatic threshold</dt><dd class="esr-pit-threshold">{{content.search.pit_threshold == null ? 'Not recorded' : (content.search.pit_threshold | number) + ' documents'}}</dd><dt>PIT keep alive</dt><dd ng-bind="content.search.pit_keep_alive || 'Not recorded'"></dd><dt>Maximum concurrency</dt><dd>{{content.search.search_concurrency == null ? 'Unknown' : content.search.search_concurrency}}</dd><dt>Maximum shard requests</dt><dd>{{content.search.max_concurrent_shard_requests == null ? 'Unknown' : content.search.max_concurrent_shard_requests}}</dd><dt>Retries</dt><dd>{{content.search.max_retries == null ? 'Unknown' : content.search.max_retries}}</dd></dl><p class="esr-note" style="margin-top:10px;" ng-if="content.search.search_mode === 'auto'">Small searches use one response. Larger requests first check whether all matches fit; PIT pagination is selected when needed. Runtime pressure can reduce concurrency and PIT page size. See Search coverage for each decision.</p></div>
+      </div>
+      <div class="esr-box esr-search-fields" style="margin-top:14px;">
+        <div class="esr-between"><h4>Fields searched for this observable</h4><span class="esr-chip esr-chip-purple">Observable type: <strong class="esr-observable-type" ng-bind="content.search.observable_type || content.search.kibana.observable_type || 'Not provided'"></strong></span></div>
+        <p class="esr-note" style="margin-top:6px;">Field selection is recorded by the analyzer for this run.</p>
+        <div class="esr-chips" style="margin-top:10px;"><code ng-repeat="field in content.search.query_fields track by $index" ng-bind="field"></code><span class="esr-note" ng-if="!content.search.query_fields.length">Not provided</span></div>
+      </div>
+      <div class="esr-grid" style="margin-top:14px;" ng-if="content.search.include_report_fields !== false">
+        <div class="esr-box"><h4>Devices in returned evidence</h4><div class="esr-chips" style="margin-top:10px;"><span class="esr-chip" ng-repeat="device in content.info.uniquedevices track by $index" ng-bind="device"></span><span class="esr-note" ng-if="!content.info.uniquedevices.length">No device values available</span></div></div>
+        <div class="esr-box"><h4>Users in returned evidence</h4><div class="esr-chips" style="margin-top:10px;"><span class="esr-chip esr-chip-purple" ng-repeat="user in content.info.uniqueusers track by $index" ng-bind="user"></span><span class="esr-note" ng-if="!content.info.uniqueusers.length">No user values available</span></div></div>
+      </div>
+    </section>
+    <footer class="esr-footer"><span>Search health colors describe execution, not observable risk.</span><span ng-if="content.search.completed_at">Completed {{content.search.completed_at | date:'dd MMM yyyy HH:mm:ss':'UTC'}} UTC</span></footer>
+  </div>
+</div>
