@@ -1,0 +1,6 @@
+elasticsearch~=8.19
+cortexutils>=2.2.0
+requests>=2.34.2
+pytz==2026.3.post1
+python-dateutil==2.9.0.post0
+packaging~=26.0
